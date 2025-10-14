@@ -2,7 +2,7 @@
   "name": "next-url-state",
   "version": "0.1.0",
   "description": "React hooks for managing state in URL search parameters with Next.js",
-  "author": "Your Name <your.email@example.com>",
+  "author": "Michael Holzner <michael.holzner@digitecgalaxus.ch>",
   "license": "MIT",
   "keywords": [
     "nextjs",
@@ -27,9 +27,9 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     }
   },
   "files": [
@@ -56,9 +56,11 @@
     "@types/react": "^18.2.48",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
+    "esbuild": "^0.25.10",
     "eslint": "^8.56.0",
-    "next": "^15.0.0",
+    "next": "^14.0.0",
     "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0"

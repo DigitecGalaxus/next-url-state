@@ -8,5 +8,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   treeshake: true,
-  external: ["react", "react-dom", "next"],
+  external: ["react", "react-dom", "next", "next/router"],
 });

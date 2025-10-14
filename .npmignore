@@ -15,6 +15,7 @@ node_modules/
 .github/
 .vscode/
 .idea/
+example/
 
 # Tests
 *.test.ts

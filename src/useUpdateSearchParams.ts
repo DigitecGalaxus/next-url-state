@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { type RefObject } from "react";
+import { type MutableRefObject, useRef } from "react";
 import { parseUrlWithImplicitDomain } from "./utils/urlParsing";
 import {
   type NonNullableUrlParams,
@@ -18,7 +18,7 @@ export type UpdateRouterOptions = {
 
 export type UpdateRouter = (
   params: NonNullableUrlParams,
-  latestRouterPathRef: RefObject<string>,
+  latestRouterPathRef: MutableRefObject<string>,
   options?: UpdateRouterOptions,
 ) => Promise<boolean>;
 
@@ -33,10 +33,13 @@ export type UpdateRouter = (
  **/
 export const useUpdateSearchParams = () => {
   const router = useRouter();
+  const routerRef = useRef(router);
+  routerRef.current = router;
+
   return (
     routerMethod: "push" | "replace",
     params: NonNullableUrlParams,
-    latestRouterPathRef: RefObject<string>,
+    latestRouterPathRef: MutableRefObject<string>,
     options: UpdateRouterOptions = {},
   ): Promise<boolean> => {
     const { pathname, hash } = parseUrlWithImplicitDomain(
@@ -50,7 +53,7 @@ export const useUpdateSearchParams = () => {
 
     const url = `${pathname}${urlQueryString}${urlHash}`;
     // execute the router method with the new params
-    return router[routerMethod](url, undefined, {
+    return routerRef.current[routerMethod](url, undefined, {
       shallow: options.shallow === undefined || options.shallow,
     });
   };
