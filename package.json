@@ -1,0 +1,69 @@
+{
+  "name": "next-url-state",
+  "version": "0.1.0",
+  "description": "React hooks for managing state in URL search parameters with Next.js",
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "keywords": [
+    "nextjs",
+    "react",
+    "hooks",
+    "url",
+    "query-params",
+    "search-params",
+    "state-management",
+    "routing"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/next-url-state.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/next-url-state/issues"
+  },
+  "homepage": "https://github.com/yourusername/next-url-state#readme",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "next": ">=12.0.0",
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.48",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "next": "^15.0.0",
+    "react": "^18.2.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
