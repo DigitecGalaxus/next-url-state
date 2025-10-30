@@ -1,4 +1,5 @@
-import { useRouter } from "next/router";
+'use client';
+
 import {
   createContext,
   type ReactNode,
@@ -6,6 +7,7 @@ import {
   useRef,
   useTransition,
 } from "react";
+import { useRouterAdapter } from "./router-adapters";
 import { useUpdateSearchParams } from "./useUpdateSearchParams";
 import {
   getUrlParams,
@@ -90,13 +92,38 @@ export const UrlParamsContext = createContext<UrlParamsContextValue>(
 );
 UrlParamsContext.displayName = "UrlParamsContext";
 
-export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
+// Dummy context for SSR or when router is not available
+// Memoized to prevent unnecessary re-renders
+const EMPTY_PARAMS: NonNullableUrlParams = {};
+const DUMMY_CONTEXT: UrlParamsContextValue = {
+  urlParams: { sync: EMPTY_PARAMS, async: EMPTY_PARAMS },
+  addParamCallback: () => () => {},
+  addParamsCallback: () => () => {},
+  setUrlParams: () => {},
+  setUrlParam: () => {},
+  diffUrlParams: () => [EMPTY_PARAMS, []],
+  updateHookStates: () => {},
+};
+
+const UrlParamsProviderClient: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const routerPath = useRouter().asPath;
+  // Client-side only: safe to use hooks
+  // Detect and use the appropriate router (Pages Router or App Router)
+  const routerAdapter = useRouterAdapter();
+  const routerPath = routerAdapter.getCurrentPath();
   const [, startTransition] = useTransition();
   const updateSearchParams = useUpdateSearchParams();
   const currentRouterPathRef = useRef(routerPath);
+
+  // If router is not available, provide dummy context
+  if (!routerAdapter.isReady) {
+    return (
+      <UrlParamsContext.Provider value={DUMMY_CONTEXT}>
+        {children}
+      </UrlParamsContext.Provider>
+    );
+  }
 
   const contextValue = useLazyRef<UrlParamsContextValue>(() => {
     /** Internal state of last history entry */
@@ -108,10 +135,10 @@ export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
     const urlParamCallbacks = new Map<string, Set<UpdateParamsCallback>>();
     const urlParamsCallbacks = new Set<UpdateCallback>();
     const uncalledParams = new Set<string>();
-    const initialUrlParms = getUrlParams(routerPath);
+    const initialUrlParams = getUrlParams(routerPath);
     const urlParams = {
-      async: initialUrlParms,
-      sync: initialUrlParms,
+      async: initialUrlParams,
+      sync: initialUrlParams,
     };
     /** Handlers to resolve the setUrlParam promise - Set<[resolve, reject]> */
     const routeChangeCompleteHandler = new Set<
@@ -144,26 +171,31 @@ export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
         const currentParams = urlParams.sync;
         const changedKeys: string[] = [];
         const newUrlParams: NonNullableUrlParams = {};
+
         if (newParams === currentParams) {
           return [currentParams, changedKeys];
         }
-        // Look for deleted params
-        Object.keys(currentParams)
-          .filter((key) => newParams[key] === undefined)
-          .forEach((key) => {
+
+        // Single pass: check for deleted params
+        for (const key in currentParams) {
+          if (newParams[key] === undefined) {
             changedKeys.push(key);
-          });
-        // Compare params and new params
-        Object.entries(newParams).forEach(([name, newValue]) => {
-          // Skip for same string or same string array
+          }
+        }
+
+        // Single pass: compare and build new params
+        for (const [name, newValue] of Object.entries(newParams)) {
+          // Skip for same string or same string array reference
           if (currentParams[name] === newValue) {
             newUrlParams[name] = newValue;
           } else if (Array.isArray(newValue)) {
-            if (
-              !Array.isArray(currentParams[name]) ||
-              currentParams[name].length !== newValue.length ||
-              currentParams[name].some((v, i) => v !== newValue[i])
-            ) {
+            const currentValue = currentParams[name];
+            const hasChanged =
+              !Array.isArray(currentValue) ||
+              currentValue.length !== newValue.length ||
+              currentValue.some((v, i) => v !== newValue[i]);
+
+            if (hasChanged) {
               changedKeys.push(name);
             }
             if (newValue.length) {
@@ -175,10 +207,13 @@ export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
             newUrlParams[name] = newValue;
             changedKeys.push(name);
           }
-        });
-        changedKeys.forEach((name) => {
+        }
+
+        // Add changed keys to uncalled params
+        for (const name of changedKeys) {
           uncalledParams.add(name);
-        });
+        }
+
         return [
           // Return the previous state if nothing has changed to keep the same object reference
           changedKeys.length ? newUrlParams : currentParams,
@@ -218,7 +253,7 @@ export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
           return;
         }
         urlParams.sync = newSyncUrlParams;
-        // Notify all callbacks (the registred hooks)
+        // Notify all callbacks (the registered hooks)
         api.updateHookStates();
         // Prevent multiple history entries for the same user action
         writeHistory ||= historyEntry && Date.now() - lastHistoryEntry > 250;
@@ -231,9 +266,9 @@ export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
           shallow = false;
         }
 
-        return new Promise<void>((...promiseHandler) => {
+        return new Promise<void>((resolve, reject) => {
           // Store the promise handler to call it after the next uncanceled transition
-          routeChangeCompleteHandler.add(promiseHandler);
+          routeChangeCompleteHandler.add([resolve, reject]);
           startTransition(() => {
             // If the url params have not changed in the meantime
             // update the url
@@ -246,10 +281,17 @@ export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
                   shallow,
                 },
               );
-              routeChangeCompleteHandler.forEach((promiseHandler) =>
-                urlChangePromise.then(...promiseHandler),
+              // Resolve all pending promises
+              urlChangePromise.then(
+                () => {
+                  routeChangeCompleteHandler.forEach(([resolve]) => resolve());
+                  routeChangeCompleteHandler.clear();
+                },
+                (error) => {
+                  routeChangeCompleteHandler.forEach(([, reject]) => reject(error));
+                  routeChangeCompleteHandler.clear();
+                }
               );
-              routeChangeCompleteHandler.clear();
               shallow = true;
               writeHistory = false;
             }
@@ -292,4 +334,25 @@ const useLazyRef = <T,>(initializer: () => T): T => {
     ref.current = initializer();
   }
   return ref.current;
+};
+
+/**
+ * SSR-safe wrapper for UrlParamsProvider
+ * Renders dummy context on server, full context on client
+ */
+export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  // Check if we're on the server
+  if (typeof window === 'undefined') {
+    // Server-side: return dummy context immediately (no hooks called)
+    return (
+      <UrlParamsContext.Provider value={DUMMY_CONTEXT}>
+        {children}
+      </UrlParamsContext.Provider>
+    );
+  }
+
+  // Client-side: use the full implementation with hooks
+  return <UrlParamsProviderClient>{children}</UrlParamsProviderClient>;
 };
