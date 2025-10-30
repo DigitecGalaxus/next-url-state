@@ -7,6 +7,11 @@ export default defineConfig({
   splitting: false,
   sourcemap: true,
   clean: true,
-  treeshake: true,
-  external: ["react", "react-dom", "next", "next/router"],
+  treeshake: false,
+  external: ["react", "react-dom", "next", "next/router", "next/navigation"],
+  esbuildOptions(options) {
+    options.banner = {
+      js: '"use client";',
+    };
+  },
 });
