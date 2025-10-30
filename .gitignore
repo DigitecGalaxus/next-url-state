@@ -32,7 +32,7 @@ yarn-error.log*
 
 #build
 example/.next/
-example-app-router/.next/
+example-app/.next/
 
 # OS
 Thumbs.db
