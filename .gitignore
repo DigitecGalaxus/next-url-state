@@ -30,7 +30,11 @@ yarn-error.log*
 *.swo
 *~
 
+#build
+example/.next/
+
 # OS
 Thumbs.db
 .claude/settings.local.json
 nul
+
