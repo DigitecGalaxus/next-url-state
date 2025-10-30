@@ -30,7 +30,9 @@ pnpm add next-url-state
 
 ## Quick Start
 
-### 1. Wrap your app with `UrlParamsProvider`
+### Pages Router Setup
+
+#### 1. Wrap your app with `UrlParamsProvider`
 
 ```tsx
 // pages/_app.tsx
@@ -47,7 +49,7 @@ function MyApp({ Component, pageProps }) {
 export default MyApp;
 ```
 
-### 2. Use the hooks in your components
+#### 2. Use the hooks in your components
 
 ```tsx
 import { useUrlParam } from 'next-url-state';
@@ -64,6 +66,61 @@ function SearchComponent() {
   );
 }
 ```
+
+### App Router Setup
+
+#### 1. Create a client provider component
+
+```tsx
+// app/providers.tsx
+'use client';
+
+import { UrlParamsProvider } from 'next-url-state';
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return <UrlParamsProvider>{children}</UrlParamsProvider>;
+}
+```
+
+#### 2. Use it in your root layout
+
+```tsx
+// app/layout.tsx
+import { Providers } from './providers';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+```
+
+#### 3. Use the hooks in your components
+
+```tsx
+// app/search/page.tsx
+'use client';
+
+import { useUrlParam } from 'next-url-state';
+
+export default function SearchPage() {
+  const [query, setQuery] = useUrlParam('q');
+
+  return (
+    <input
+      value={query || ''}
+      onChange={(e) => setQuery(e.target.value)}
+      placeholder="Search..."
+    />
+  );
+}
+```
+
+> **Note**: Components using the hooks must be client components (`'use client'`)
 
 ## API Reference
 
@@ -112,12 +169,24 @@ const [values, setValues] = useUrlParamArray<T>(paramName, options?);
 
 ```tsx
 // Multiple tags: /page?tag=react&tag=nextjs&tag=typescript
-const [tags, setTags] = useUrlParamArray('tag');
-// tags = ['react', 'nextjs', 'typescript']
+// RECOMMENDED: Always use a parser to ensure you get an array
+const [tags, setTags] = useUrlParamArray<string[]>('tag', {
+  parse: (value) => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    return [value]; // Single value becomes array
+  },
+});
 
-setTags(['react', 'vue']);
-// URL becomes: /page?tag=react&tag=vue
+// Now tags is always string[] (never undefined or string)
+setTags([...tags, 'new-tag']); // ✅ Safe to use array methods
+
+// Simple usage (may return string | string[] | undefined)
+const [tags, setTags] = useUrlParamArray('tag');
+// tags could be: undefined, 'single', or ['multiple', 'values']
 ```
+
+> **💡 Best Practice**: Always provide a `parse` function to ensure consistent array behavior and avoid `.map()` errors.
 
 ### `useUrlParams`
 
@@ -314,10 +383,24 @@ const [params, setParams] = useUrlParams(['search', 'page'] as const);
 
 ## Compatibility
 
-- **Next.js**: >= 12.0.0 (Pages Router)
+- **Next.js**: >= 12.0.0 (Pages Router and App Router)
 - **React**: >= 18.0.0
 
-> **Note**: This library is designed for Next.js Pages Router. For App Router support, please open an issue.
+### Router Support
+
+This library supports **both** Next.js routing systems:
+
+#### ✅ Pages Router (`next/router`)
+- Fully supported with all features
+- Shallow routing enabled by default
+- Automatic detection when using Pages Router
+
+#### ✅ App Router (`next/navigation`)
+- Fully supported with all features
+- Automatic detection when using App Router
+- Note: App Router doesn't support shallow routing (handled gracefully)
+
+The library **automatically detects** which router you're using - no configuration needed! See the [examples](example/) folder for demonstrations of both routers.
 
 ## Contributing
 

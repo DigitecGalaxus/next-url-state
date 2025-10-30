@@ -1,10 +1,9 @@
-import { useRouter } from "next/router";
-import { type MutableRefObject, useRef } from "react";
+'use client';
+
+import { type MutableRefObject, useCallback, useEffect, useRef } from "react";
+import { useRouterAdapter, type RouterAdapter } from "./router-adapters";
 import { parseUrlWithImplicitDomain } from "./utils/urlParsing";
-import {
-  type NonNullableUrlParams,
-  type UrlParams,
-} from "./utils/parseUrl";
+import { type NonNullableUrlParams, type UrlParams } from "./utils/parseUrl";
 
 export type UpdateRouterOptions = {
   /**
@@ -19,7 +18,7 @@ export type UpdateRouterOptions = {
 export type UpdateRouter = (
   params: NonNullableUrlParams,
   latestRouterPathRef: MutableRefObject<string>,
-  options?: UpdateRouterOptions,
+  options?: UpdateRouterOptions
 ) => Promise<boolean>;
 
 /**
@@ -32,31 +31,57 @@ export type UpdateRouter = (
  * ```
  **/
 export const useUpdateSearchParams = () => {
-  const router = useRouter();
-  const routerRef = useRef(router);
-  routerRef.current = router;
+  const routerAdapter = useRouterAdapter();
+  const routerAdapterRef = useRef<RouterAdapter | null>(null);
 
-  return (
-    routerMethod: "push" | "replace",
-    params: NonNullableUrlParams,
-    latestRouterPathRef: MutableRefObject<string>,
-    options: UpdateRouterOptions = {},
-  ): Promise<boolean> => {
-    const { pathname, hash } = parseUrlWithImplicitDomain(
-      latestRouterPathRef.current,
-    );
+  // set the ref only when the router becomes ready (client)
+  useEffect(() => {
+    if (routerAdapter.isReady) {
+      routerAdapterRef.current = routerAdapter;
+    } else {
+      routerAdapterRef.current = null;
+    }
+  }, [routerAdapter.isReady]);
 
-    const queryString = stringifyUrlParams(params);
+  return useCallback(
+    (
+      routerMethod: "push" | "replace",
+      params: NonNullableUrlParams,
+      latestRouterPathRef: MutableRefObject<string>,
+      options: UpdateRouterOptions = {}
+    ): Promise<boolean> => {
+      const { pathname, hash } = parseUrlWithImplicitDomain(
+        latestRouterPathRef.current
+      );
 
-    const urlQueryString = queryString ? `?${queryString}` : "";
-    const urlHash = hash ? `${hash}` : "";
+      const isShallow = options.shallow === undefined || options.shallow;
 
-    const url = `${pathname}${urlQueryString}${urlHash}`;
-    // execute the router method with the new params
-    return routerRef.current[routerMethod](url, undefined, {
-      shallow: options.shallow === undefined || options.shallow,
-    });
-  };
+      // If router is not ready, fallback to History API (browser only)
+      if (!routerAdapterRef.current) {
+        if (typeof window !== 'undefined') {
+          const queryString = stringifyUrlParams(params);
+          const urlQueryString = queryString ? `?${queryString}` : "";
+          const urlHash = hash ? `${hash}` : "";
+          const url = `${pathname}${urlQueryString}${urlHash}`;
+
+          // Shallow routing uses replaceState, non-shallow uses pushState
+          const historyMethod = isShallow ? 'replaceState' : 'pushState';
+          window.history[historyMethod]({}, "", url);
+        }
+        return Promise.resolve(true);
+      }
+
+      // Use the router adapter to update URL
+      return routerAdapterRef.current.updateUrl(
+        routerMethod,
+        params,
+        pathname,
+        hash,
+        isShallow
+      );
+    },
+    [routerAdapterRef]
+  );
 };
 
 /**
