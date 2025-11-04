@@ -5,14 +5,41 @@
 [![npm version](https://badge.fury.io/js/next-url-state.svg)](https://www.npmjs.com/package/next-url-state)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## Why use this library?
+
+### The Problem with Vanilla Next.js
+
+Managing URL state in Next.js requires a lot of boilerplate and comes with several pain points
+
+**Problems:**
+- **Lots of boilerplate** - Manual state synchronization, useEffect hooks, query object spreading
+- **Race conditions** - State and URL can get out of sync during navigation
+- **Performance issues** - Every keystroke triggers a router update, causing re-renders
+- **Type safety** - URL params are always `string | string[] | undefined`, requiring type guards everywhere
+- **Complex updates** - Managing multiple parameters requires careful query object manipulation
+- **Router differences** - Different APIs for Pages Router (`next/router`) vs App Router (`next/navigation`)
+
+### The Solution with next-url-state is very slim and simple
+
+**Benefits:**
+- ✅ **Minimal code** - One line hook replaces 20+ lines of boilerplate
+- ✅ **Automatic sync** - State and URL stay in sync automatically
+- ✅ **Optimized performance** - Built-in batching (250ms) and optimistic updates
+- ✅ **Type safety** - Support for custom types with automatic inference
+- ✅ **Simple API** - Works just like `useState` but with URL persistence
+- ✅ **Router agnostic** - Works with both Pages Router and App Router automatically
+
+This library handles all the complexity of URL state management, letting you focus on building features instead of wrestling with router APIs.
+
 ## Features
 
-- 🎯 **Type-safe** - Full TypeScript support with type inference
-- ⚡ **Optimized** - Minimal re-renders with smart change detection
-- 🔄 **Sync & Async** - Optimistic updates with URL synchronization
-- 🎨 **Flexible** - Support for strings, arrays, custom types, and serialization
-- 🪝 **Multiple Hooks** - Different hooks for different use cases
-- 📦 **Zero Dependencies** - Only peer dependencies on React and Next.js
+- **Type-safe** - Full TypeScript support with automatic type inference and custom type parsing
+- **Optimized** - Minimal re-renders with smart change detection and automatic batching (250ms window)
+- **Sync & Async** - Optimistic UI updates with background URL synchronization using `useTransition`
+- **Flexible** - Support for strings, numbers, booleans, arrays, objects, and custom serialization
+- **Multiple Hooks** - Specialized hooks for single params, arrays, multiple params, and read-only access
+- **Dual Router Support** - Works seamlessly with both Next.js Pages Router and App Router
+- **Zero Dependencies** - Lightweight with only peer dependencies on React and Next.js
 
 ## Installation
 
@@ -38,7 +65,7 @@ pnpm add next-url-state
 // pages/_app.tsx
 import { UrlParamsProvider } from 'next-url-state';
 
-function MyApp({ Component, pageProps }) {
+const MyApp = ({ Component, pageProps }) => {
   return (
     <UrlParamsProvider>
       <Component {...pageProps} />
@@ -54,7 +81,7 @@ export default MyApp;
 ```tsx
 import { useUrlParam } from 'next-url-state';
 
-function SearchComponent() {
+const SearchComponent = () => {
   const [query, setQuery] = useUrlParam('q');
 
   return (
@@ -69,7 +96,7 @@ function SearchComponent() {
 
 ### App Router Setup
 
-#### 1. Create a client provider component
+#### 1. Create a client provider component (if only this provider is needed proceed with point 2)
 
 ```tsx
 // app/providers.tsx
@@ -77,7 +104,7 @@ function SearchComponent() {
 
 import { UrlParamsProvider } from 'next-url-state';
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export const Providers = ({ children }: { children: React.ReactNode }) => {
   return <UrlParamsProvider>{children}</UrlParamsProvider>;
 }
 ```
@@ -88,11 +115,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 // app/layout.tsx
 import { Providers } from './providers';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html>
       <body>
-        <Providers>{children}</Providers>
+        {/* UrlParamsProvider can be used directly if no other provider is needed */}
+        <Providers>{children}</Providers> 
       </body>
     </html>
   );
@@ -107,7 +135,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 import { useUrlParam } from 'next-url-state';
 
-export default function SearchPage() {
+export default const SearchPage = () => {
   const [query, setQuery] = useUrlParam('q');
 
   return (
@@ -213,7 +241,7 @@ setParams({ q: 'new search', page: '1' });
 
 ### `useUrlParamsArray`
 
-Similar to `useUrlParams` but returns arrays for all values.
+Similar to `useUrlParams` but returns arrays for each param.
 
 ```tsx
 const [params, setParams] = useUrlParamsArray<Keys>(keys?);
@@ -265,7 +293,7 @@ const [filters, setFilters] = useUrlParam<Filters>('filters', {
 ### Pagination Example
 
 ```tsx
-function PaginatedList() {
+const PaginatedList = () => {
   const [page, setPage] = useUrlParam<number>('page', {
     parse: (value) => (value ? parseInt(value, 10) : 1),
     serialize: (value) => value?.toString(),
@@ -293,7 +321,7 @@ function PaginatedList() {
 ### Search with Filters
 
 ```tsx
-function ProductSearch() {
+const ProductSearch = () => {
   const [search, setSearch] = useUrlParam('q');
   const [categories, setCategories] = useUrlParamArray('category');
   const [priceRange, setPriceRange] = useUrlParam('price');
@@ -358,7 +386,7 @@ await setQuery('search term', { shallow: false });
 This library provides optimistic updates with URL synchronization:
 
 1. **Immediate UI updates** - When you call a setter, the UI updates immediately
-2. **URL synchronization** - The URL is updated in the background using Next.js router
+2. **URL synchronization** - The URL is updated in the background using Next.js Router (next-router or App router)
 3. **Smart batching** - Multiple updates within 250ms are batched into a single URL change
 4. **Minimal re-renders** - Only components subscribed to changed parameters re-render
 
@@ -408,7 +436,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT © [Your Name]
+MIT © Michael Holzner
 
 ## Acknowledgments
 
