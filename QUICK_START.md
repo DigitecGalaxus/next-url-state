@@ -8,7 +8,7 @@ The package is **ready to test**! Here's the fastest way:
 
 ```bash
 # Windows (double-click or run in terminal)
-cd C:\development\next-url-state
+cd /path/to/next-url-state
 test-local.bat
 
 # Mac/Linux
@@ -23,7 +23,10 @@ Then open **http://localhost:3001** in your browser! 🎉
 
 ```bash
 # 1. Go to the package directory
-cd C:\development\next-url-state
+cd /path/to/next-url-state
+
+# 2. Install dependencies
+npm install/next-url-state
 
 # 2. Install and build
 npm install
@@ -85,7 +88,6 @@ next-url-state/
 ├── README.md                  # Main documentation
 ├── TESTING.md                 # Detailed testing guide
 ├── SETUP_GUIDE.md            # Publishing instructions
-└── DIFFERENCES.md            # Comparison with original
 ```
 
 ## Next Steps
@@ -94,36 +96,15 @@ next-url-state/
 
 ```bash
 # In your Next.js project
-npm install C:/development/next-url-state
+npm install next-url-state
 
 # Or using npm link
-cd C:/development/next-url-state
+cd /path/to/next-url-state
 npm link
 
 cd /your/nextjs/project
 npm link next-url-state
 ```
-
-### 2. Update Package Info for Publishing
-
-Edit `package.json`:
-- Change author name/email
-- Update repository URL (replace `yourusername`)
-- Update homepage URL
-
-### 3. Create GitHub Repository
-
-```bash
-cd C:\development\next-url-state
-
-# Update remote URL
-git remote add origin https://github.com/YOUR-USERNAME/next-url-state.git
-git push -u origin main
-```
-
-### 4. Publish to NPM
-
-See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed publishing instructions.
 
 ## Development Workflow
 
@@ -152,7 +133,6 @@ npm run dev
 | [README.md](README.md) | Main documentation with API reference |
 | [TESTING.md](TESTING.md) | Comprehensive testing guide |
 | [SETUP_GUIDE.md](SETUP_GUIDE.md) | How to publish to npm/GitHub |
-| [DIFFERENCES.md](DIFFERENCES.md) | Comparison with original package |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines |
 | [example/README.md](example/README.md) | Example app documentation |
 
@@ -184,40 +164,10 @@ dist/
 
 Total package size: ~30 KB (minified)
 
-## Comparison with Original
-
-The open-source version is **functionally identical** to `@segments/url-params`:
-
-✅ Same API
-✅ Same behavior
-✅ Same TypeScript types
-✅ Zero breaking changes
-
-Only differences:
-- Removed internal dependencies
-- Uses `useRouter()` instead of `useRouterSingleton()`
-- Packaged for npm distribution
-
-See [DIFFERENCES.md](DIFFERENCES.md) for details.
-
 ## Support
 
-- 📖 Read [README.md](README.md) for full API documentation
-- 🧪 Check [TESTING.md](TESTING.md) for testing strategies
-- 📦 See [SETUP_GUIDE.md](SETUP_GUIDE.md) for publishing
-- 🔍 Review [DIFFERENCES.md](DIFFERENCES.md) for changes
-
-## Success Criteria
-
-Your package is working if:
-
-1. ✅ Build completes without errors (`npm run build`)
-2. ✅ Example app runs without errors (`npm run dev`)
-3. ✅ URL updates when you interact with components
-4. ✅ Browser back/forward buttons work correctly
-5. ✅ Page refresh preserves state from URL
-6. ✅ No console errors or warnings
-7. ✅ TypeScript types work correctly
+- Read [README.md](README.md) for full API documentation
+- Check [TESTING.md](TESTING.md) for testing strategies
 
 **You're ready to go!** 🎉
 

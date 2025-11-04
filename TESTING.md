@@ -10,7 +10,7 @@ The easiest way to test the package:
 
 ```bash
 # 1. Navigate to the package root
-cd C:/development/next-url-state
+cd path/to/next-url-state
 
 # 2. Install dependencies
 npm install
@@ -56,7 +56,7 @@ The example page includes tests for:
 
 ```bash
 # 1. In the next-url-state directory
-cd C:/development/next-url-state
+cd path/to/next-url-state
 npm install
 npm run build
 npm link
@@ -105,7 +105,7 @@ npm install
 
 ```bash
 # 1. In the next-url-state directory
-cd C:/development/next-url-state
+cd path/to/next-url-state
 npm run build
 npm pack
 # This creates: next-url-state-0.1.0.tgz
@@ -120,12 +120,12 @@ Since you already have a Next.js setup, you can test it there:
 
 ```bash
 # 1. Build the package
-cd C:/development/next-url-state
+cd path/to/next-url-state
 npm install
 npm run build
 
 # 2. In your isomorph project, install from local
-cd C:/development/isomorph
+cd path/to/isomorph
 npm install ../next-url-state
 
 # 3. Update imports in a test component
@@ -143,11 +143,11 @@ If you're actively developing and want changes to rebuild automatically:
 
 ```bash
 # Terminal 1: Watch and rebuild the package
-cd C:/development/next-url-state
+cd path/to/next-url-state
 npm run dev
 
 # Terminal 2: Run the example
-cd C:/development/next-url-state/example
+cd path/to/next-url-state/example
 npm run dev
 ```
 

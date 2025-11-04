@@ -1,5 +1,6 @@
 'use client';
 
+import { NextRouter } from "next/router";
 import type { NonNullableUrlParams } from "./utils/parseUrl";
 
 /**
@@ -88,7 +89,7 @@ export function useRouterAdapter(): RouterAdapter {
 function createAppRouterAdapter(
   pathname: string,
   searchParams: URLSearchParams,
-  router: any
+  router: NextRouter
 ): RouterAdapter {
   return {
     type: 'app',
@@ -127,7 +128,7 @@ function createAppRouterAdapter(
 /**
  * Create an adapter for Next.js Pages Router (next/router)
  */
-function createPagesRouterAdapter(router: any): RouterAdapter {
+function createPagesRouterAdapter(router: NextRouter): RouterAdapter {
   return {
     type: 'pages',
     isReady: router.isReady === true,
@@ -185,7 +186,6 @@ function createFallbackAdapter(): RouterAdapter {
       const urlHash = hash ? hash : '';
       const url = `${pathname}${urlQueryString}${urlHash}`;
 
-      // Use History API
       const historyMethod = method === 'push' ? 'pushState' : 'replaceState';
       window.history[historyMethod]({}, '', url);
 
