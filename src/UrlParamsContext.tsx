@@ -7,7 +7,7 @@ import React, {
   useRef,
   useTransition,
 } from "react";
-import { useRouterAdapter } from "./router-adapters";
+import { useRouterAdapter } from "./routerAdapters";
 import { useUpdateSearchParams } from "./useUpdateSearchParams";
 import {
   getUrlParams,
