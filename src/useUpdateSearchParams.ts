@@ -1,7 +1,7 @@
 'use client';
 
 import { type MutableRefObject, useCallback, useEffect, useRef } from "react";
-import { useRouterAdapter, type RouterAdapter } from "./router-adapters";
+import { useRouterAdapter, type RouterAdapter } from "./routerAdapters";
 import { parseUrlWithImplicitDomain } from "./utils/urlParsing";
 import { type NonNullableUrlParams, type UrlParams } from "./utils/parseUrl";
 
