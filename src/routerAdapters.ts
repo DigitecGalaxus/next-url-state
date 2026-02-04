@@ -7,14 +7,7 @@ import type { NonNullableUrlParams } from "./utils/parseUrl";
  * Common router interface that abstracts both Pages Router and App Router
  */
 export interface RouterAdapter {
-  /**
-   * Get the current URL path with search params and hash
-   */
   getCurrentPath(): string;
-
-  /**
-   * Check if the router is ready to be used
-   */
   isReady: boolean;
 
   /**
@@ -32,60 +25,89 @@ export interface RouterAdapter {
     hash: string,
     shallow: boolean
   ): Promise<boolean>;
-
-  /**
-   * The router type identifier
-   */
   type: 'pages' | 'app' | 'fallback';
 }
 
-/**
- * Hook to detect and create the appropriate router adapter
- * This must be called as a hook from a React component
- */
-export function useRouterAdapter(): RouterAdapter {
-  // Server-side: return fallback adapter
+function detectRouterType(): 'app' | 'pages' | 'fallback' {
+  if (typeof window !== 'undefined' && (window as unknown as { __NEXT_DATA__?: unknown }).__NEXT_DATA__) {
+    return 'pages';
+  }
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const nav = require('next/navigation');
+    if (nav && typeof nav.usePathname === 'function') {
+      return 'app';
+    }
+  } catch {
+    // Expected in non-Next.js projects or Pages Router apps
+  }
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const router = require('next/router');
+    if (router && typeof router.useRouter === 'function') {
+      return 'pages';
+    }
+  } catch {
+    // Expected in non-Next.js projects or App Router apps
+  }
+
+  return 'fallback';
+}
+
+// Detect router type once at module load
+const DETECTED_ROUTER_TYPE = detectRouterType();
+
+function useAppRouterAdapterInternal(): RouterAdapter {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { usePathname, useSearchParams, useRouter } = require('next/navigation');
+
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   if (typeof window === 'undefined') {
     return createFallbackAdapter();
   }
 
-  // Try Pages Router first (most common)
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { useRouter: usePagesRouter } = require('next/router');
-    const pagesRouter = usePagesRouter();
+  return createAppRouterAdapter(pathname, searchParams, router);
+}
 
-    if (pagesRouter) {
-      return createPagesRouterAdapter(pagesRouter);
-    }
-  } catch (e) {
-    // Pages Router not available, try App Router
+function usePagesRouterAdapterInternal(): RouterAdapter {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { useRouter } = require('next/router');
+  const router = useRouter();
+
+  if (typeof window === 'undefined' || !router) {
+    return createFallbackAdapter();
   }
 
-  // Try App Router
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const navigation = require('next/navigation');
-    const { usePathname, useSearchParams, useRouter: useAppRouter } = navigation;
+  return createPagesRouterAdapter(router);
+}
 
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
-    const router = useAppRouter();
-
-    if (pathname !== null && searchParams && router) {
-      return createAppRouterAdapter(pathname, searchParams, router);
-    }
-  } catch (e) {
-    // App Router not available
-  }
-
-  // Fallback to History API
+/* hook for fallback adapter using History API */
+function useFallbackAdapterInternal(): RouterAdapter {
   return createFallbackAdapter();
 }
 
+const useRouterAdapterImpl: () => RouterAdapter =
+  DETECTED_ROUTER_TYPE === 'app' ? useAppRouterAdapterInternal :
+  DETECTED_ROUTER_TYPE === 'pages' ? usePagesRouterAdapterInternal :
+  useFallbackAdapterInternal;
+
 /**
- * Create an adapter for Next.js App Router (next/navigation)
+ * Auto-detecting hook that returns the appropriate router adapter.
+ * Detects App Router vs Pages Router at module load time.
  */
+export function useRouterAdapter(): RouterAdapter {
+  return useRouterAdapterImpl();
+}
+
+export const useAppRouterAdapter = useAppRouterAdapterInternal;
+export const usePagesRouterAdapter = usePagesRouterAdapterInternal;
+export const useFallbackAdapter = useFallbackAdapterInternal;
+
 function createAppRouterAdapter(
   pathname: string,
   searchParams: URLSearchParams,
@@ -93,7 +115,7 @@ function createAppRouterAdapter(
 ): RouterAdapter {
   return {
     type: 'app',
-    isReady: true, // App Router is always ready
+    isReady: true,
 
     getCurrentPath(): string {
       const search = searchParams.toString();
@@ -125,9 +147,6 @@ function createAppRouterAdapter(
   };
 }
 
-/**
- * Create an adapter for Next.js Pages Router (next/router)
- */
 function createPagesRouterAdapter(router: NextRouter): RouterAdapter {
   return {
     type: 'pages',
@@ -194,9 +213,6 @@ function createFallbackAdapter(): RouterAdapter {
   };
 }
 
-/**
- * Convert a NonNullableUrlParams object to a query string
- */
 function stringifyUrlParams(params: NonNullableUrlParams): string {
   const searchParams = new URLSearchParams();
   for (const key in params) {
@@ -209,4 +225,3 @@ function stringifyUrlParams(params: NonNullableUrlParams): string {
   }
   return searchParams.toString();
 }
-
