@@ -25,7 +25,7 @@ export interface RouterAdapter {
     hash: string,
     shallow: boolean
   ): Promise<boolean>;
-  type: 'pages' | 'app' | 'fallback';
+  type: 'pages' | 'app' | 'fallback' | 'rsc';
 }
 
 function detectRouterType(): 'app' | 'pages' | 'fallback' {
@@ -108,7 +108,43 @@ export const useAppRouterAdapter = useAppRouterAdapterInternal;
 export const usePagesRouterAdapter = usePagesRouterAdapterInternal;
 export const useFallbackAdapter = useFallbackAdapterInternal;
 
-function createAppRouterAdapter(
+/**
+ * Create an adapter for React Server Components.
+ * Provides read-only access to URL params (setter is a no-op).
+ *
+ * @example
+ * ```tsx
+ * // In a Server Component (app/page.tsx)
+ * export default function Page({ searchParams }: { searchParams: Record<string, string> }) {
+ *   const adapter = createRscAdapter('/current-path', new URLSearchParams(searchParams));
+ *   const path = adapter.getCurrentPath();
+ * }
+ * ```
+ */
+export function createRscAdapter(
+  pathname: string,
+  searchParams: URLSearchParams
+): RouterAdapter {
+  return {
+    type: 'rsc',
+    isReady: true,
+
+    getCurrentPath(): string {
+      const search = searchParams.toString();
+      return `${pathname}${search ? `?${search}` : ''}`;
+    },
+
+    updateUrl(): Promise<boolean> {
+      // No-op: URL updates are not possible in Server Components
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[next-url-state] updateUrl is not available in Server Components');
+      }
+      return Promise.resolve(false);
+    },
+  };
+}
+
+export function createAppRouterAdapter(
   pathname: string,
   searchParams: URLSearchParams,
   router: NextRouter
@@ -147,7 +183,7 @@ function createAppRouterAdapter(
   };
 }
 
-function createPagesRouterAdapter(router: NextRouter): RouterAdapter {
+export function createPagesRouterAdapter(router: NextRouter): RouterAdapter {
   return {
     type: 'pages',
     isReady: router.isReady === true,
@@ -177,7 +213,7 @@ function createPagesRouterAdapter(router: NextRouter): RouterAdapter {
  * Create a fallback adapter that uses the History API
  * Used when no Next.js router is available (SSR, testing, etc.)
  */
-function createFallbackAdapter(): RouterAdapter {
+export function createFallbackAdapter(): RouterAdapter {
   return {
     type: 'fallback',
     isReady: typeof window !== 'undefined',

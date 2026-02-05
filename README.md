@@ -15,31 +15,22 @@ Managing URL state in Next.js requires a lot of boilerplate and comes with sever
 - **Lots of boilerplate** - Manual state synchronization, useEffect hooks, query object spreading
 - **Race conditions** - State and URL can get out of sync during navigation
 - **Performance issues** - Every keystroke triggers a router update, causing re-renders
-- **Type safety** - URL params are always `string | string[] | undefined`, requiring type guards everywhere
+- **Type safety** - URL params are always `string | string[] | undefined`, requiring type guards
 - **Complex updates** - Managing multiple parameters requires careful query object manipulation
 - **Router differences** - Different APIs for Pages Router (`next/router`) vs App Router (`next/navigation`)
 
-### The Solution with next-url-state is very slim and simple
+### The Solution with next-url-state is slim and simple
 
 **Benefits:**
 - ✅ **Minimal code** - One line hook replaces 20+ lines of boilerplate
 - ✅ **Automatic sync** - State and URL stay in sync automatically
 - ✅ **Optimized performance** - Built-in batching (250ms) and optimistic updates
-- ✅ **Type safety** - Support for custom types with automatic inference
+- ✅ **Type safety & Flexibility** - Support for basic and custom data types, including custom serialization
 - ✅ **Simple API** - Works just like `useState` but with URL persistence
 - ✅ **Router agnostic** - Works with both Pages Router and App Router automatically
+- ✅ **Zero Dependencies** - Lightweight with only peer dependencies on React and Next.js
 
 This library handles all the complexity of URL state management, letting you focus on building features instead of wrestling with router APIs.
-
-## Features
-
-- **Type-safe** - Full TypeScript support with automatic type inference and custom type parsing
-- **Optimized** - Minimal re-renders with smart change detection and automatic batching (250ms window)
-- **Sync & Async** - Optimistic UI updates with background URL synchronization using `useTransition`
-- **Flexible** - Support for strings, numbers, booleans, arrays, objects, and custom serialization
-- **Multiple Hooks** - Specialized hooks for single params, arrays, multiple params, and read-only access
-- **Dual Router Support** - Works seamlessly with both Next.js Pages Router and App Router
-- **Zero Dependencies** - Lightweight with only peer dependencies on React and Next.js
 
 ## Installation
 
@@ -96,7 +87,7 @@ const SearchComponent = () => {
 
 ### App Router Setup
 
-#### 1. Create a client provider component (if only this provider is needed proceed with point 2)
+#### 1. Create a client provider component (if only this provider is needed proceed with step 2)
 
 ```tsx
 // app/providers.tsx
@@ -148,7 +139,7 @@ export default const SearchPage = () => {
 }
 ```
 
-> **Note**: Components using the hooks must be client components (`'use client'`)
+> **Note**: Components using these hooks must be client components (`'use client'`)
 
 ## API Reference
 
@@ -428,7 +419,48 @@ This library supports **both** Next.js routing systems:
 - Automatic detection when using App Router
 - Note: App Router doesn't support shallow routing (handled gracefully)
 
-The library **automatically detects** which router you're using - no configuration needed! See the [examples](example/) folder for demonstrations of both routers.
+#### ✅ React Server Components (RSC)
+- Read-only access to URL parameters
+- Use `createRscAdapter` for Server Components
+- Setter is a no-op (URL updates require client-side JavaScript)
+
+See the [examples](example/) folder for demos of all supported router types.
+
+### React Server Components
+
+For React Server Components, use the `createRscAdapter` function to read URL parameters (no writing):
+
+```tsx
+// app/products/page.tsx (Server Component)
+import { createRscAdapter } from 'next-url-state';
+
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[]>>;
+}
+
+export default async function ProductsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const adapter = createRscAdapter(
+    '/products',
+    new URLSearchParams(params as Record<string, string>)
+  );
+
+  const currentPath = adapter.getCurrentPath();
+  // → "/products?category=electronics&sort=price"
+
+  // Note: adapter.updateUrl() is a no-op in RSC
+  // For URL updates, use a Client Component
+
+  return (
+    <div>
+      <p>Current path: {currentPath}</p>
+      {/* Pass data to Client Components for interactivity */}
+    </div>
+  );
+}
+```
+
+> **Note**: `updateUrl()` returns `false` and logs a warning in development mode, since URL updates require client-side JavaScript.
 
 ## Contributing
 

@@ -4,17 +4,15 @@ import { useUrlParamArray } from '../useUrlParamArray';
 import { UrlParamsProvider } from '../UrlParamsContext';
 import React from 'react';
 
-// Mock next/router
 jest.mock('next/router', () => ({
   useRouter: () => ({
     isReady: true,
     asPath: '/?tag=react&tag=nextjs&tag=typescript',
-    push: jest.fn().mockResolvedValue(true),
-    replace: jest.fn().mockResolvedValue(true),
+    push: jest.fn<() => Promise<boolean>>().mockResolvedValue(true),
+    replace: jest.fn<() => Promise<boolean>>().mockResolvedValue(true),
   }),
 }));
 
-// Mock next/navigation
 jest.mock('next/navigation', () => {
   throw new Error('next/navigation not available');
 });
