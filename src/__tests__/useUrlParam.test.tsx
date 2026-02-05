@@ -9,8 +9,8 @@ jest.mock('next/router', () => ({
   useRouter: () => ({
     isReady: true,
     asPath: '/?name=John&age=25',
-    push: jest.fn().mockResolvedValue(true),
-    replace: jest.fn().mockResolvedValue(true),
+    push: jest.fn<() => Promise<boolean>>().mockResolvedValue(true),
+    replace: jest.fn<() => Promise<boolean>>().mockResolvedValue(true),
   }),
 }));
 
@@ -41,7 +41,7 @@ describe('useUrlParam', () => {
   it('should parse number parameter', () => {
     const { result } = renderHook(
       () =>
-        useUrlParam<number>('age', {
+        useUrlParam<number | undefined>('age', {
           parse: (value) => (value ? parseInt(value, 10) : undefined),
           serialize: (value) => value?.toString(),
         }),

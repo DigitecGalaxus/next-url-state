@@ -428,7 +428,48 @@ This library supports **both** Next.js routing systems:
 - Automatic detection when using App Router
 - Note: App Router doesn't support shallow routing (handled gracefully)
 
+#### ✅ React Server Components (RSC)
+- Read-only access to URL parameters
+- Use `createRscAdapter` for Server Components
+- Setter is a no-op (URL updates require client-side JavaScript)
+
 The library **automatically detects** which router you're using - no configuration needed! See the [examples](example/) folder for demonstrations of both routers.
+
+### React Server Components
+
+For React Server Components, use the `createRscAdapter` function to read URL parameters:
+
+```tsx
+// app/products/page.tsx (Server Component)
+import { createRscAdapter } from 'next-url-state';
+
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[]>>;
+}
+
+export default async function ProductsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const adapter = createRscAdapter(
+    '/products',
+    new URLSearchParams(params as Record<string, string>)
+  );
+
+  const currentPath = adapter.getCurrentPath();
+  // → "/products?category=electronics&sort=price"
+
+  // Note: adapter.updateUrl() is a no-op in RSC
+  // For URL updates, use a Client Component
+
+  return (
+    <div>
+      <p>Current path: {currentPath}</p>
+      {/* Pass data to Client Components for interactivity */}
+    </div>
+  );
+}
+```
+
+> **Note**: `updateUrl()` returns `false` and logs a warning in development mode, since URL updates require client-side JavaScript.
 
 ## Contributing
 
