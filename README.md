@@ -5,7 +5,7 @@
 [![npm version](https://badge.fury.io/js/next-url-state.svg)](https://www.npmjs.com/package/next-url-state)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Why use this library?
+## Why you should use this library?
 
 ### The Problem with Vanilla Next.js
 
@@ -85,6 +85,27 @@ const SearchComponent = () => {
 }
 ```
 
+### Router Support
+
+This library supports **both** Next.js routing systems:
+
+#### ✅ Pages Router (`next/router`)
+- Fully supported with all features
+- Shallow routing enabled by default
+- Automatic detection when using Pages Router
+
+#### ✅ App Router (`next/navigation`)
+- Fully supported with all features
+- Automatic detection when using App Router
+- Note: App Router doesn't support shallow routing (handled gracefully)
+
+#### ✅ React Server Components (RSC)
+- Read-only access to URL parameters
+- Use `createRscAdapter` for Server Components
+- Setter is a no-op (URL updates require client-side JavaScript)
+
+See the [examples](example/) folder for demos of all supported router types.
+
 ### App Router Setup
 
 #### 1. Create a client provider component (if only this provider is needed proceed with step 2)
@@ -140,6 +161,42 @@ export default const SearchPage = () => {
 ```
 
 > **Note**: Components using these hooks must be client components (`'use client'`)
+
+### React Server Components
+
+For React Server Components, use the `createRscAdapter` function to read URL parameters (no writing):
+
+```tsx
+// app/products/page.tsx (Server Component)
+import { createRscAdapter } from 'next-url-state';
+
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[]>>;
+}
+
+export default async function ProductsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const adapter = createRscAdapter(
+    '/products',
+    new URLSearchParams(params as Record<string, string>)
+  );
+
+  const currentPath = adapter.getCurrentPath();
+  // → "/products?category=electronics&sort=price"
+
+  // Note: adapter.updateUrl() is a no-op in RSC
+  // For URL updates, use a Client Component
+
+  return (
+    <div>
+      <p>Current path: {currentPath}</p>
+      {/* Pass data to Client Components for interactivity */}
+    </div>
+  );
+}
+```
+
+> **Note**: `updateUrl()` returns `false` and logs a warning in development mode, since URL updates require client-side JavaScript.
 
 ## API Reference
 
@@ -405,62 +462,6 @@ const [params, setParams] = useUrlParams(['search', 'page'] as const);
 - **Next.js**: >= 12.0.0 (Pages Router and App Router)
 - **React**: >= 18.0.0
 
-### Router Support
-
-This library supports **both** Next.js routing systems:
-
-#### ✅ Pages Router (`next/router`)
-- Fully supported with all features
-- Shallow routing enabled by default
-- Automatic detection when using Pages Router
-
-#### ✅ App Router (`next/navigation`)
-- Fully supported with all features
-- Automatic detection when using App Router
-- Note: App Router doesn't support shallow routing (handled gracefully)
-
-#### ✅ React Server Components (RSC)
-- Read-only access to URL parameters
-- Use `createRscAdapter` for Server Components
-- Setter is a no-op (URL updates require client-side JavaScript)
-
-See the [examples](example/) folder for demos of all supported router types.
-
-### React Server Components
-
-For React Server Components, use the `createRscAdapter` function to read URL parameters (no writing):
-
-```tsx
-// app/products/page.tsx (Server Component)
-import { createRscAdapter } from 'next-url-state';
-
-interface PageProps {
-  searchParams: Promise<Record<string, string | string[]>>;
-}
-
-export default async function ProductsPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const adapter = createRscAdapter(
-    '/products',
-    new URLSearchParams(params as Record<string, string>)
-  );
-
-  const currentPath = adapter.getCurrentPath();
-  // → "/products?category=electronics&sort=price"
-
-  // Note: adapter.updateUrl() is a no-op in RSC
-  // For URL updates, use a Client Component
-
-  return (
-    <div>
-      <p>Current path: {currentPath}</p>
-      {/* Pass data to Client Components for interactivity */}
-    </div>
-  );
-}
-```
-
-> **Note**: `updateUrl()` returns `false` and logs a warning in development mode, since URL updates require client-side JavaScript.
 
 ## Contributing
 
