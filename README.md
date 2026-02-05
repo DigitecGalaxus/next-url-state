@@ -85,27 +85,6 @@ const SearchComponent = () => {
 }
 ```
 
-### Router Support
-
-This library supports **both** Next.js routing systems:
-
-#### ✅ Pages Router (`next/router`)
-- Fully supported with all features
-- Shallow routing enabled by default
-- Automatic detection when using Pages Router
-
-#### ✅ App Router (`next/navigation`)
-- Fully supported with all features
-- Automatic detection when using App Router
-- Note: App Router doesn't support shallow routing (handled gracefully)
-
-#### ✅ React Server Components (RSC)
-- Read-only access to URL parameters
-- Use `createRscAdapter` for Server Components
-- Setter is a no-op (URL updates require client-side JavaScript)
-
-See the [examples](example/) folder for demos of all supported router types.
-
 ### App Router Setup
 
 #### 1. Create a client provider component (if only this provider is needed proceed with step 2)
@@ -462,6 +441,26 @@ const [params, setParams] = useUrlParams(['search', 'page'] as const);
 - **Next.js**: >= 12.0.0 (Pages Router and App Router)
 - **React**: >= 18.0.0
 
+### Router Support
+
+This library supports **both** Next.js routing systems:
+
+#### ✅ Pages Router (`next/router`)
+- Fully supported with all features
+- Shallow routing enabled by default
+- Automatic detection when using Pages Router
+
+#### ✅ App Router (`next/navigation`)
+- Fully supported with all features
+- Automatic detection when using App Router
+- Note: App Router doesn't support shallow routing (handled gracefully)
+
+#### ✅ React Server Components (RSC)
+- Read-only access to URL parameters
+- Use `createRscAdapter` for Server Components
+- Setter is a no-op (URL updates require client-side JavaScript)
+
+See the [examples](example/) folder for demos of all supported router types.
 
 ## Contributing
 
