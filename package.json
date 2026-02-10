@@ -16,12 +16,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/next-url-state.git"
+    "url": "git+https://github.com/DigitecGalaxus/next-url-state"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/next-url-state/issues"
+    "url": "https://github.com/DigitecGalaxus/next-url-state/issues"
   },
-  "homepage": "https://github.com/yourusername/next-url-state#readme",
+  "homepage": "https://github.com/DigitecGalaxus/next-url-state#readme",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

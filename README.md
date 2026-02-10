@@ -106,7 +106,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 // app/layout.tsx
 import { Providers } from './providers';
 
-export default const RootLayout = ({ children }: { children: React.ReactNode }) => {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html>
       <body>
@@ -126,7 +126,7 @@ export default const RootLayout = ({ children }: { children: React.ReactNode }) 
 
 import { useUrlParam } from 'next-url-state';
 
-export default const SearchPage = () => {
+export default function SearchPage() {
   const [query, setQuery] = useUrlParam('q');
 
   return (
