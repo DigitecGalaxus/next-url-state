@@ -70,7 +70,7 @@ export interface UrlParamsContextValue {
   /** Internal function which is called once router changes */
   updateHookStates: () => void;
   /**
-   * Internal syncronous state for all useParam hooks
+   * Internal synchronous state for all useParam hooks
    * and state diffing.
    * The values are readonly to allow reference comparison
    */

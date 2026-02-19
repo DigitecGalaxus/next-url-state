@@ -31,7 +31,7 @@ export function useComputedValue<T>(
   // Function to update the value and trigger a re-render
   const setValue = useCallback((updater: (prev: T) => T) => {
     const nextValue = updater(valueRef.current);
-    // Only update if the value is not null and has changed
+    // Only update if the value has changed (reference inequality)
     if (valueRef.current !== nextValue) {
       valueRef.current = nextValue;
       // Trigger a re-render
