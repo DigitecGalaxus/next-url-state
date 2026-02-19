@@ -24,7 +24,7 @@ Managing URL state in Next.js requires a lot of boilerplate and comes with sever
 **Benefits:**
 - ✅ **Minimal code** - One line hook replaces 20+ lines of boilerplate
 - ✅ **Automatic sync** - State and URL stay in sync automatically
-- ✅ **Optimized performance** - Built-in batching (250ms) and optimistic updates
+- ✅ **Optimized performance** - Built-in batching ( default: 250ms, configurable ) and optimistic updates
 - ✅ **Type safety & Flexibility** - Support for basic and custom data types, including custom serialization
 - ✅ **Simple API** - Works just like `useState` but with URL persistence
 - ✅ **Router agnostic** - Works with both Pages Router and App Router automatically
@@ -147,7 +147,7 @@ For React Server Components, use the `createRscAdapter` function to read URL par
 
 ```tsx
 // app/products/page.tsx (Server Component)
-import { createRscAdapter } from 'next-url-state';
+import { createRscAdapter } from 'next-url-state/rsc';
 
 interface PageProps {
   searchParams: Promise<Record<string, string | string[]>>;
@@ -477,11 +477,13 @@ See the [examples](example/) folder for demos of all supported router types.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome!
+
+The [contributing guide](CONTRIBUTING.md) helps you get started with setting up the development environment and explains the development workflow.
 
 ## License
 
-MIT © Michael Holzner
+**next-url-state** is licensed under the [MIT License](https://github.com/DigitecGalaxus/next-url-state/blob/main/LICENSE).
 
 ## Acknowledgments
 
