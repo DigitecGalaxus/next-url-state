@@ -56,7 +56,8 @@ export const useUrlParams = <TKeys extends string>(
     });
   }, [
     // join keys re-subscribe only if the value of keys changes
-    keys.join("-"),
+    // use null value not allowed in urls to prevent conflicts with actual key separators
+    keys.join("\0"),
   ]);
   return [
     currentUrlParams,
@@ -119,7 +120,8 @@ export const useUrlParamsArray = <TKeys extends string>(
     });
   }, [
     // join keys re-subscribe only if the value of keys changes
-    keys.join("-"),
+    // use null value not allowed in urls to prevent conflicts with actual key separators
+    keys.join("\0"),
   ]);
   return [
     currentUrlParams,

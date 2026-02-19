@@ -14,6 +14,7 @@ import {
   type NonNullableUrlParams,
   type UrlParam,
 } from "./utils/parseUrl";
+import { HISTORY_DEBOUNCE_MS } from "./config";
 
 type UpdateParamsCallback = (value: UrlParam) => void;
 
@@ -47,16 +48,16 @@ export interface UrlParamsContextValue {
   /**
    * Set a single url param
    */
-  setUrlParams: (
-    params: Record<string, UrlParam>,
+  setUrlParam: (
+    name: string,
+    value: UrlParam,
     options?: UrlChangeOptions,
   ) => void;
   /**
    * Set multiple url params
    */
-  setUrlParam: (
-    name: string,
-    value: UrlParam,
+  setUrlParams: (
+    params: Record<string, UrlParam>,
     options?: UrlChangeOptions,
   ) => void;
   /**
@@ -87,11 +88,6 @@ export interface UrlParamsContextValue {
   };
 }
 
-export const UrlParamsContext = createContext<UrlParamsContextValue>(
-  null as unknown as UrlParamsContextValue,
-);
-UrlParamsContext.displayName = "UrlParamsContext";
-
 // Dummy context for SSR or when router is not available
 // Memoized to prevent unnecessary re-renders
 const EMPTY_PARAMS: NonNullableUrlParams = {};
@@ -104,6 +100,11 @@ const DUMMY_CONTEXT: UrlParamsContextValue = {
   diffUrlParams: () => [EMPTY_PARAMS, []],
   updateHookStates: () => {},
 };
+
+export const UrlParamsContext = createContext<UrlParamsContextValue>(
+  DUMMY_CONTEXT,
+);
+UrlParamsContext.displayName = "UrlParamsContext";
 
 const UrlParamsProviderClient: React.FC<{ children: ReactNode }> = ({
   children,
@@ -256,7 +257,7 @@ const UrlParamsProviderClient: React.FC<{ children: ReactNode }> = ({
         // Notify all callbacks (the registered hooks)
         api.updateHookStates();
         // Prevent multiple history entries for the same user action
-        writeHistory ||= historyEntry && Date.now() - lastHistoryEntry > 250;
+        writeHistory ||= historyEntry && Date.now() - lastHistoryEntry > HISTORY_DEBOUNCE_MS;
         if (writeHistory) {
           lastHistoryEntry = Date.now();
         }
@@ -324,6 +325,7 @@ const UrlParamsProviderClient: React.FC<{ children: ReactNode }> = ({
     </UrlParamsContext.Provider>
   );
 };
+UrlParamsProviderClient.displayName = "UrlParamsProviderClient";
 
 /**
  * Helper to initialize a value only once
@@ -356,3 +358,4 @@ export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
   // Client-side: use the full implementation with hooks
   return <UrlParamsProviderClient>{children}</UrlParamsProviderClient>;
 };
+UrlParamsProvider.displayName = "UrlParamsProvider";

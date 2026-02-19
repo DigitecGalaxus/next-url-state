@@ -106,7 +106,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 // app/layout.tsx
 import { Providers } from './providers';
 
-export default const RootLayout = ({ children }: { children: React.ReactNode }) => {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html>
       <body>
@@ -126,7 +126,7 @@ export default const RootLayout = ({ children }: { children: React.ReactNode }) 
 
 import { useUrlParam } from 'next-url-state';
 
-export default const SearchPage = () => {
+export default function SearchPage() {
   const [query, setQuery] = useUrlParam('q');
 
   return (
@@ -414,8 +414,21 @@ This library provides optimistic updates with URL synchronization:
 
 1. **Immediate UI updates** - When you call a setter, the UI updates immediately
 2. **URL synchronization** - The URL is updated in the background using Next.js Router (next-router or App router)
-3. **Smart batching** - Multiple updates within 250ms are batched into a single URL change
+3. **Smart batching** - Multiple updates within the debounce window are batched into a single URL change
 4. **Minimal re-renders** - Only components subscribed to changed parameters re-render
+
+## Configuration
+
+Library defaults are defined in `src/config.ts` and can be adjusted to tune behavior:
+
+| Constant | Default | Description |
+|---|---|---|
+| `HISTORY_DEBOUNCE_MS` | `250` | Minimum interval (ms) between URL updates that create separate browser history entries. Rapid changes within this window are coalesced into a single entry, preventing the back button from stepping through every keystroke. |
+
+```ts
+// src/config.ts
+export const HISTORY_DEBOUNCE_MS = 250;
+```
 
 ## TypeScript Support
 

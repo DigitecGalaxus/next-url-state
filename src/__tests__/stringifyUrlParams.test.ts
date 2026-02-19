@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { stringifyUrlParams } from '../useUpdateSearchParams';
+import { stringifyUrlParams } from '../utils/stringifyUrlParams';
 
 describe('stringifyUrlParams', () => {
   it('should convert single parameter to query string', () => {
