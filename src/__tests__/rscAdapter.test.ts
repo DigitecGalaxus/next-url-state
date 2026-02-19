@@ -64,7 +64,7 @@ describe('createRscAdapter', () => {
       await adapter.updateUrl('push', {}, '/test', '', false);
 
       expect(console.warn).toHaveBeenCalledWith(
-        '[next-url-state] updateUrl is not available in React Server Components'
+        '[next-url-state] updateUrl is not available in Server Components'
       );
 
       process.env.NODE_ENV = originalEnv;

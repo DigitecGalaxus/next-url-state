@@ -1,7 +1,9 @@
 'use client';
 
-import { NextRouter } from "next/router";
+import type { NextRouter } from "next/router";
 import type { NonNullableUrlParams } from "./utils/parseUrl";
+import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { stringifyUrlParams } from "./utils/stringifyUrlParams";
 
 /**
  * Common router interface that abstracts both Pages Router and App Router
@@ -97,8 +99,19 @@ const useRouterAdapterImpl: () => RouterAdapter =
   useFallbackAdapterInternal;
 
 /**
- * Auto-detecting hook that returns the appropriate router adapter.
- * Detects App Router vs Pages Router at module load time.
+ * React hook that returns the correct {@link RouterAdapter} for the current
+ * Next.js environment.
+ *
+ * Router detection runs once at module load time and is then cached, so
+ * every call returns the same adapter type without re-detecting.
+ *
+ * Resolution order:
+ * 1. **Pages Router** — if `window.__NEXT_DATA__` exists
+ * 2. **App Router** — if `next/navigation` can be resolved
+ * 3. **Fallback** — uses the History API directly (SSR, testing, non-Next.js)
+ *
+ * For explicit control, use {@link useAppRouterAdapter},
+ * {@link usePagesRouterAdapter}, or {@link useFallbackAdapter} instead.
  */
 export function useRouterAdapter(): RouterAdapter {
   return useRouterAdapterImpl();
@@ -144,10 +157,21 @@ export function createRscAdapter(
   };
 }
 
+/**
+ * Creates a {@link RouterAdapter} for the Next.js App Router (`next/navigation`).
+ *
+ * Wraps the App Router's `push` and `replace` methods so they conform to
+ * the shared RouterAdapter interface. Shallow routing is accepted but ignored,
+ * since the App Router does not support it.
+ *
+ * @param pathname - Current pathname from `usePathname()`
+ * @param searchParams - Current search params from `useSearchParams()`
+ * @param router - App Router instance from `useRouter()`
+ */
 export function createAppRouterAdapter(
   pathname: string,
   searchParams: URLSearchParams,
-  router: NextRouter
+  router: AppRouterInstance
 ): RouterAdapter {
   return {
     type: 'app',
@@ -183,6 +207,15 @@ export function createAppRouterAdapter(
   };
 }
 
+/**
+ * Creates a {@link RouterAdapter} for the Next.js Pages Router (`next/router`).
+ *
+ * Wraps the Pages Router's `push` and `replace` methods so they conform to
+ * the shared RouterAdapter interface. Supports shallow routing, which is
+ * enabled by default to avoid re-running data fetching methods.
+ *
+ * @param router - Pages Router instance from `useRouter()`
+ */
 export function createPagesRouterAdapter(router: NextRouter): RouterAdapter {
   return {
     type: 'pages',
@@ -247,17 +280,4 @@ export function createFallbackAdapter(): RouterAdapter {
       return Promise.resolve(true);
     },
   };
-}
-
-function stringifyUrlParams(params: NonNullableUrlParams): string {
-  const searchParams = new URLSearchParams();
-  for (const key in params) {
-    const value = params[key];
-    if (Array.isArray(value)) {
-      value.forEach((v) => searchParams.append(key, v));
-    } else if (value !== undefined) {
-      searchParams.set(key, value);
-    }
-  }
-  return searchParams.toString();
 }
