@@ -13,6 +13,10 @@
   - [Pages Router Setup](#pages-router-setup)
   - [App Router Setup](#app-router-setup)
   - [React Server Components](#react-server-components)
+- [Migration Guide](#migration-guide)
+  - [From Next.js Pages Router (the /pages directory)](#from-vanilla-nextjs--pages-router-the-pages-directory)
+  - [From Next.js App Router (the /app directory)](#from-vanilla-nextjs--app-router-the-app-directory)
+  - [From use-query-params](#from-use-query-params)
 - [API Reference](#api-reference)
   - [useUrlParam](#useurlparam)
   - [useUrlParamArray](#useurlparamarray)
@@ -202,6 +206,174 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 ```
 
 > **Note**: `updateUrl()` returns `false` and logs a warning in development mode, since URL updates require client-side JavaScript.
+
+## Migration Guide
+
+### From Next.js Pages Router (the /pages directory)
+
+**Before** — manual state sync, boilerplate, and race-condition-prone:
+
+```tsx
+import { useRouter } from 'next/router';
+import { useState, useEffect } from 'react';
+
+const SearchPage = () => {
+  const router = useRouter();
+  const [search, setSearch] = useState((router.query.q as string) ?? '');
+
+  useEffect(() => {
+    setSearch((router.query.q as string) ?? '');
+  }, [router.query.q]);
+
+  const handleChange = (value: string) => {
+    setSearch(value);
+    router.replace(
+      { query: { ...router.query, q: value } },
+      undefined,
+      { shallow: true }
+    );
+  };
+};
+```
+
+**After** — one line, no boilerplate:
+
+```tsx
+import { useUrlParam } from 'next-url-state';
+
+const SearchPage = () => {
+  const [search, setSearch] = useUrlParam('q');
+};
+```
+
+Provider change in `_app.tsx`:
+
+```tsx
+// Before
+import { useRouter } from 'next/router'; // no provider needed, but lots of manual work
+
+// After
+import { UrlParamsProvider } from 'next-url-state';
+
+const MyApp = ({ Component, pageProps }) => (
+  <UrlParamsProvider>
+    <Component {...pageProps} />
+  </UrlParamsProvider>
+);
+```
+
+---
+
+### From Next.js App Router (the /app directory)
+
+**Before** — verbose URL construction on every update:
+
+```tsx
+'use client';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useCallback } from 'react';
+
+const SearchPage = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const search = searchParams.get('q');
+
+  const setSearch = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value) params.set('q', value);
+      else params.delete('q');
+      router.replace(`${pathname}?${params.toString()}`);
+    },
+    [searchParams, router, pathname]
+  );
+};
+```
+
+**After**:
+
+```tsx
+'use client';
+import { useUrlParam } from 'next-url-state';
+
+const SearchPage = () => {
+  const [search, setSearch] = useUrlParam('q');
+};
+```
+
+Provider change in `layout.tsx`:
+
+```tsx
+// Before — no provider, but each component wires up routing manually
+
+// After
+import { UrlParamsProvider } from 'next-url-state';
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <UrlParamsProvider>{children}</UrlParamsProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+---
+
+### From `use-query-params`
+
+**Provider** — simpler setup, no adapter required:
+
+```tsx
+// Before
+import { QueryParamProvider } from 'use-query-params';
+import { NextAdapter } from 'next-query-params';
+
+<QueryParamProvider adapter={NextAdapter}>
+  <Component {...pageProps} />
+</QueryParamProvider>
+
+// After
+import { UrlParamsProvider } from 'next-url-state';
+
+<UrlParamsProvider>
+  <Component {...pageProps} />
+</UrlParamsProvider>
+```
+
+**Hook equivalents:**
+
+| `use-query-params` | `next-url-state` |
+|---|---|
+| `useQueryParam('q', StringParam)` | `useUrlParam('q')` |
+| `useQueryParam('page', NumberParam)` | `useUrlParam<number>('page', { parse: (v) => parseInt(v ?? '1', 10), serialize: String })` |
+| `useQueryParam('flag', BooleanParam)` | `useUrlParam<boolean>('flag', { parse: (v) => v === 'true', serialize: (v) => v ? 'true' : undefined })` |
+| `useQueryParam('tags', ArrayParam)` | `useUrlParamArray('tags')` |
+| `useQueryParams({ q: StringParam, page: NumberParam })` | `useUrlParams(['q', 'page'])` |
+
+**Example side-by-side:**
+
+```tsx
+// Before
+import { useQueryParam, useQueryParams, StringParam, NumberParam, ArrayParam } from 'use-query-params';
+
+const [search, setSearch] = useQueryParam('q', StringParam);
+const [page, setPage] = useQueryParam('page', NumberParam);
+const [tags, setTags] = useQueryParam('tags', ArrayParam);
+const [{ q, page }, setQuery] = useQueryParams({ q: StringParam, page: NumberParam });
+
+// After
+import { useUrlParam, useUrlParamArray, useUrlParams } from 'next-url-state';
+
+const [search, setSearch] = useUrlParam('q');
+const [page, setPage] = useUrlParam<number>('page', { parse: (v) => parseInt(v ?? '1', 10), serialize: String });
+const [tags, setTags] = useUrlParamArray('tags');
+const [{ q, page }, setQuery] = useUrlParams(['q', 'page']);
+```
 
 ## API Reference
 
