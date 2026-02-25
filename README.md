@@ -5,6 +5,7 @@
 [![npm version](https://badge.fury.io/js/next-url-state.svg)](https://www.npmjs.com/package/next-url-state)
 [![npm downloads](https://img.shields.io/npm/dw/next-url-state.svg)](https://www.npmjs.com/package/next-url-state)
 [![GitHub stars](https://img.shields.io/github/stars/DigitecGalaxus/next-url-state.svg)](https://github.com/DigitecGalaxus/next-url-state)
+[![Bundle size](https://img.shields.io/bundlephobia/minzip/next-url-state)](https://bundlephobia.com/package/next-url-state)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Used in production by:**
@@ -14,8 +15,10 @@
 ## Table of Contents
 
 - [Why you should use this library?](#why-you-should-use-this-library)
+  - [How It Compares](#how-it-compares)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+  - [30-Second Start](#30-second-start)
   - [Pages Router Setup](#pages-router-setup)
   - [App Router Setup](#app-router-setup)
   - [React Server Components](#react-server-components)
@@ -69,6 +72,23 @@ Managing URL state in Next.js requires a lot of boilerplate and comes with sever
 
 This library handles all the complexity of URL state management, letting you focus on building features instead of wrestling with router APIs.
 
+### How It Compares
+
+| Feature | next-url-state | [nuqs](https://nuqs.47ng.com) | [use-query-params](https://github.com/pbeshai/use-query-params) |
+|---|:---:|:---:|:---:|
+| Pages Router (`/pages`) | ✅ | ✅ | ✅ |
+| App Router (`/app`) | ✅ | ✅ | ⚠️ adapter required |
+| React Server Components | ✅ read-only | ✅ read-only | ❌ |
+| Works like `useState` | ✅ | ✅ | ✅ |
+| Optimistic UI updates | ✅ | ❌ | ❌ |
+| Automatic batching | ✅ | ✅ | ❌ |
+| Custom parse / serialize | ✅ | ✅ | ✅ |
+| TypeScript support | ✅ | ✅ | ✅ |
+| Zero dependencies | ✅ | ❌ | ❌ |
+| Bundle size (min+gzip) | [![](https://img.shields.io/bundlephobia/minzip/next-url-state)](https://bundlephobia.com/package/next-url-state) | [![](https://img.shields.io/bundlephobia/minzip/nuqs)](https://bundlephobia.com/package/nuqs) | [![](https://img.shields.io/bundlephobia/minzip/use-query-params)](https://bundlephobia.com/package/use-query-params) |
+
+> ⚠️ Competitor features reflect best available knowledge — check their docs for the latest.
+
 ## Installation
 
 ```bash
@@ -84,6 +104,35 @@ pnpm add next-url-state
 ```
 
 ## Quick Start
+
+### 30-Second Start
+
+Two steps, works with both Pages Router and App Router:
+
+```tsx
+// Step 1 — wrap your app once
+// pages/_app.tsx  OR  app/layout.tsx
+import { UrlParamsProvider } from 'next-url-state';
+
+export default function App({ children }) {
+  return <UrlParamsProvider>{children}</UrlParamsProvider>;
+}
+```
+
+```tsx
+// Step 2 — use it anywhere, just like useState
+'use client'; // only needed for App Router
+import { useUrlParam } from 'next-url-state';
+
+function Search() {
+  const [query, setQuery] = useUrlParam('q');
+  return <input value={query ?? ''} onChange={e => setQuery(e.target.value)} />;
+}
+```
+
+That's it. The URL updates automatically. For router-specific setup details see below.
+
+---
 
 ### Pages Router Setup
 
