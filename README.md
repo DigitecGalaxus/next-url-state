@@ -1,9 +1,15 @@
 # next-url-state
 
-> React hooks for elegantly managing state in URL search parameters with Next.js
+> Next.js URL state management that gets out of your way.
 
 [![npm version](https://badge.fury.io/js/next-url-state.svg)](https://www.npmjs.com/package/next-url-state)
+[![npm downloads](https://img.shields.io/npm/dw/next-url-state.svg)](https://www.npmjs.com/package/next-url-state)
+[![GitHub stars](https://img.shields.io/github/stars/DigitecGalaxus/next-url-state.svg)](https://github.com/DigitecGalaxus/next-url-state)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**Used in production by:**
+
+[<img src="https://github.com/DigitecGalaxus.png" height="40" alt="Digitec Galaxus" />](https://www.galaxus.ch)
 
 ## Table of Contents
 
