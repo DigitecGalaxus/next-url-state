@@ -32,6 +32,7 @@
 - [Configuration](#configuration)
 - [TypeScript Support](#typescript-support)
 - [Compatibility](#compatibility)
+- [FAQ / Troubleshooting](#faq--troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -672,6 +673,56 @@ This library supports **both** Next.js routing systems:
 - Setter is a no-op (URL updates require client-side JavaScript)
 
 See the [examples](example/) folder for demos of all supported router types.
+
+## FAQ / Troubleshooting
+
+**Why not just use `useSearchParams()` directly?**
+
+`useSearchParams` (App Router) and `router.query` (Pages Router) require you to wire up reading, writing, and URL construction yourself every single time. For a single param that means three hooks, manual `URLSearchParams` construction, careful spreading to preserve other params, and no batching. `next-url-state` reduces all of that to one line that behaves like `useState`.
+
+---
+
+**Does this work with SSR / Server-Side Rendering?**
+
+Yes — in two ways:
+- **Client components** (`'use client'`) rendered on the server: the initial URL is read correctly during SSR and hydrated without a flicker on the client.
+- **React Server Components**: use `createRscAdapter` from `next-url-state/rsc` for read-only access. Setters are no-ops in RSC since URL updates require client-side JavaScript.
+
+---
+
+**How does batching work exactly?**
+
+Every setter call updates the UI **immediately** (optimistic update), but the actual URL write is debounced. All setter calls that happen within the `HISTORY_DEBOUNCE_MS` window (default 250 ms) are merged into a single `router.replace` / `router.push` call. This means typing into a search input doesn't flood the browser history with one entry per keystroke — only a single history entry is created once the user pauses. The debounce is [configurable](src/config.ts).
+
+---
+
+**Does batching work across multiple components?**
+
+Yes. All hooks share the same internal store via `UrlParamsProvider`. Updates from different components within the same debounce window are merged into one URL change.
+
+---
+
+**Why do I need `UrlParamsProvider`?**
+
+The provider creates the shared reactive store that all hooks read from and write to. Without it, hooks can't share state between components or batch their updates together. If you forget it, hooks will throw an error pointing you to add the provider.
+
+---
+
+**What happens when I set a value to `undefined`?**
+
+The parameter is removed from the URL entirely, keeping it clean. For example, `setSearch(undefined)` turns `?q=hello&page=2` into `?page=2`.
+
+---
+
+**Does this work with the browser's Back / Forward buttons?**
+
+Yes. When `historyEntry: true` is passed to a setter, a new browser history entry is created and the back button will undo that change. By default (`historyEntry: false`) the URL is replaced without adding a history entry, which is the right default for things like search inputs.
+
+---
+
+**Can I use this outside of Next.js?**
+
+No. The library depends on Next.js routing APIs (`next/router` for the Pages Router, `next/navigation` for the App Router) and is not designed for plain React or other frameworks.
 
 ## Contributing
 
