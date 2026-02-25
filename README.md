@@ -5,6 +5,32 @@
 [![npm version](https://badge.fury.io/js/next-url-state.svg)](https://www.npmjs.com/package/next-url-state)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## Table of Contents
+
+- [Why you should use this library?](#why-you-should-use-this-library)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+  - [Pages Router Setup](#pages-router-setup)
+  - [App Router Setup](#app-router-setup)
+  - [React Server Components](#react-server-components)
+- [API Reference](#api-reference)
+  - [useUrlParam](#useurlparam)
+  - [useUrlParamArray](#useurlparamarray)
+  - [useUrlParams](#useurlparams)
+  - [useUrlParamsArray](#useurlparamsarray)
+  - [useUrlParamValue](#useurlparamvalue)
+- [Advanced Usage](#advanced-usage)
+  - [Custom Types with Parsing and Serialization](#custom-types-with-parsing-and-serialization)
+  - [Pagination Example](#pagination-example)
+  - [Search with Filters](#search-with-filters)
+- [Options](#options)
+- [How It Works](#how-it-works)
+- [Configuration](#configuration)
+- [TypeScript Support](#typescript-support)
+- [Compatibility](#compatibility)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Why you should use this library?
 
 ### The Problem with Vanilla Next.js
