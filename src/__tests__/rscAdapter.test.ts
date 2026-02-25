@@ -1,5 +1,5 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { createRscAdapter } from '../routerAdapters';
+import { createRscAdapter } from '../rsc';
 
 describe('createRscAdapter', () => {
   beforeEach(() => {
