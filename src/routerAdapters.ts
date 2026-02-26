@@ -156,10 +156,11 @@ export function createAppRouterAdapter(
       const url = `${pathname}${urlQueryString}${hash}`;
 
       // App Router uses different methods
+      // scroll: false prevents scrolling to top on every URL update
       if (method === 'push') {
-        router.push(url);
+        router.push(url, { scroll: false });
       } else {
-        router.replace(url);
+        router.replace(url, { scroll: false });
       }
 
       return Promise.resolve(true);

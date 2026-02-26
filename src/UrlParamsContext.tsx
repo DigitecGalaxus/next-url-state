@@ -5,6 +5,7 @@ import React, {
   type ReactNode,
   useEffect,
   useRef,
+  useState,
   useTransition,
 } from "react";
 import { useRouterAdapter } from "./routerAdapters";
@@ -340,14 +341,18 @@ const useLazyRef = <T,>(initializer: () => T): T => {
 
 /**
  * SSR-safe wrapper for UrlParamsProvider
- * Renders dummy context on server, full context on client
+ * Renders dummy context on server and during hydration, full context after mount
  */
 export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  // Check if we're on the server
-  if (typeof window === 'undefined') {
-    // Server-side: return dummy context immediately (no hooks called)
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
     return (
       <UrlParamsContext.Provider value={DUMMY_CONTEXT}>
         {children}
@@ -355,7 +360,6 @@ export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
     );
   }
 
-  // Client-side: use the full implementation with hooks
   return <UrlParamsProviderClient>{children}</UrlParamsProviderClient>;
 };
 UrlParamsProvider.displayName = "UrlParamsProvider";

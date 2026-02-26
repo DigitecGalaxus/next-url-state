@@ -1,6 +1,6 @@
 'use client';
 
-import React, { FunctionComponent, useState } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 import { SimpleParamExample, NumberParamExample, BooleanParamExample, ArrayParamExample, MultipleParamsExample, ReadOnlyParamExample, PaginationExample } from './components/demoComponents';
 
 const demos: { label: string; component: FunctionComponent }[] = [
@@ -14,8 +14,12 @@ const demos: { label: string; component: FunctionComponent }[] = [
 ];
 
 export default function HomePage() {
-   const [activeTab, setActiveTab] = useState<number>(0);
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const [activeTab, setActiveTab] = useState<number>(0);
+  const [currentUrl, setCurrentUrl] = useState<string>('');
+
+  useEffect(() => {
+    setCurrentUrl(window.location.href);
+  }, []);
 
   const ActiveDemo = demos[activeTab].component;
 
