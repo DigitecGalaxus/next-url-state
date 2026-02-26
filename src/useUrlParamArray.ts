@@ -80,6 +80,7 @@ export const useUrlParamArray = <TParam = string | string[]>(
   );
 
   // Rerender when the url param changes
+  // paramName is a dep so the callback re-registers if the watched param changes
   useEffect(
     () =>
       addParamCallback(paramName, (newValue) => {
@@ -89,7 +90,7 @@ export const useUrlParamArray = <TParam = string | string[]>(
             : [parseParamValue(newValue || [], options) as TParam, newValue],
         );
       }),
-    [],
+    [paramName],
   );
 
   const updateValue = useCallback(
@@ -110,7 +111,7 @@ export const useUrlParamArray = <TParam = string | string[]>(
       }
       return setUrlParam(paramName, urlParamValue, urlChangeOptions);
     },
-    [],
+    [paramName, options, setUrlParam],
   );
 
   return [value, updateValue] as const;

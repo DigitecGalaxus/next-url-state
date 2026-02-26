@@ -1,9 +1,34 @@
 # next-url-state
 
-> React hooks for elegantly managing state in URL search parameters with Next.js
+> Next.js URL state management that gets out of your way.
 
 [![npm version](https://badge.fury.io/js/next-url-state.svg)](https://www.npmjs.com/package/next-url-state)
+[![npm downloads](https://img.shields.io/npm/dw/next-url-state.svg)](https://www.npmjs.com/package/next-url-state)
+[![GitHub stars](https://img.shields.io/github/stars/DigitecGalaxus/next-url-state.svg)](https://github.com/DigitecGalaxus/next-url-state)
+[![Bundle size](https://img.shields.io/bundlephobia/minzip/next-url-state)](https://bundlephobia.com/package/next-url-state)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+<video src="https://github.com/user-attachments/assets/01f9b244-2258-4ad6-9af5-c79d3487bcff" autoplay loop muted playsinline width="100%"></video>
+
+**Used in production by:**
+
+[<img src="https://github.com/DigitecGalaxus.png" height="40" alt="Digitec Galaxus" />](https://www.galaxus.ch)
+
+## Table of Contents
+
+- [Why you should use this library?](#why-you-should-use-this-library)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Migration Guide](#migration-guide)
+- [API Reference](#api-reference)
+- [Options](#options)
+- [How It Works](#how-it-works)
+- [Configuration](#configuration)
+- [TypeScript Support](#typescript-support)
+- [Compatibility](#compatibility)
+- [FAQ / Troubleshooting](#faq--troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Why you should use this library?
 
@@ -24,13 +49,30 @@ Managing URL state in Next.js requires a lot of boilerplate and comes with sever
 **Benefits:**
 - ✅ **Minimal code** - One line hook replaces 20+ lines of boilerplate
 - ✅ **Automatic sync** - State and URL stay in sync automatically
-- ✅ **Optimized performance** - Built-in batching (250ms) and optimistic updates
+- ✅ **Optimized performance** - Built-in batching ( default: 250ms, configurable ) and optimistic updates
 - ✅ **Type safety & Flexibility** - Support for basic and custom data types, including custom serialization
 - ✅ **Simple API** - Works just like `useState` but with URL persistence
 - ✅ **Router agnostic** - Works with both Pages Router and App Router automatically
 - ✅ **Zero Dependencies** - Lightweight with only peer dependencies on React and Next.js
 
 This library handles all the complexity of URL state management, letting you focus on building features instead of wrestling with router APIs.
+
+### How It Compares
+
+| Feature | next-url-state | [nuqs](https://nuqs.47ng.com) | [use-query-params](https://github.com/pbeshai/use-query-params) |
+|---|:---:|:---:|:---:|
+| Pages Router (`/pages`) | ✅ | ✅ | ✅ |
+| App Router (`/app`) | ✅ | ✅ | ⚠️ adapter required |
+| React Server Components | ✅ read-only | ✅ read-only | ❌ |
+| Works like `useState` | ✅ | ✅ | ✅ |
+| Optimistic UI updates | ✅ | ❌ | ❌ |
+| Automatic batching | ✅ | ✅ | ❌ |
+| Custom parse / serialize | ✅ | ✅ | ✅ |
+| TypeScript support | ✅ | ✅ | ✅ |
+| Zero dependencies | ✅ | ❌ | ❌ |
+| Bundle size (min+gzip) | [![](https://img.shields.io/bundlephobia/minzip/next-url-state)](https://bundlephobia.com/package/next-url-state) | [![](https://img.shields.io/bundlephobia/minzip/nuqs)](https://bundlephobia.com/package/nuqs) | [![](https://img.shields.io/bundlephobia/minzip/use-query-params)](https://bundlephobia.com/package/use-query-params) |
+
+> ⚠️ Competitor features reflect best available knowledge — check their docs for the latest.
 
 ## Installation
 
@@ -47,6 +89,35 @@ pnpm add next-url-state
 ```
 
 ## Quick Start
+
+### 30-Second Start
+
+Two steps, works with both Pages Router and App Router:
+
+```tsx
+// Step 1 — wrap your app once
+// pages/_app.tsx  OR  app/layout.tsx
+import { UrlParamsProvider } from 'next-url-state';
+
+export default function App({ children }) {
+  return <UrlParamsProvider>{children}</UrlParamsProvider>;
+}
+```
+
+```tsx
+// Step 2 — use it anywhere, just like useState
+'use client'; // only needed for App Router
+import { useUrlParam } from 'next-url-state';
+
+function Search() {
+  const [query, setQuery] = useUrlParam('q');
+  return <input value={query ?? ''} onChange={e => setQuery(e.target.value)} />;
+}
+```
+
+That's it. The URL updates automatically. For router-specific setup details see below.
+
+---
 
 ### Pages Router Setup
 
@@ -147,7 +218,7 @@ For React Server Components, use the `createRscAdapter` function to read URL par
 
 ```tsx
 // app/products/page.tsx (Server Component)
-import { createRscAdapter } from 'next-url-state';
+import { createRscAdapter } from 'next-url-state/rsc';
 
 interface PageProps {
   searchParams: Promise<Record<string, string | string[]>>;
@@ -176,6 +247,174 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 ```
 
 > **Note**: `updateUrl()` returns `false` and logs a warning in development mode, since URL updates require client-side JavaScript.
+
+## Migration Guide
+
+### From Next.js Pages Router (the /pages directory)
+
+**Before** — manual state sync, boilerplate, and race-condition-prone:
+
+```tsx
+import { useRouter } from 'next/router';
+import { useState, useEffect } from 'react';
+
+const SearchPage = () => {
+  const router = useRouter();
+  const [search, setSearch] = useState((router.query.q as string) ?? '');
+
+  useEffect(() => {
+    setSearch((router.query.q as string) ?? '');
+  }, [router.query.q]);
+
+  const handleChange = (value: string) => {
+    setSearch(value);
+    router.replace(
+      { query: { ...router.query, q: value } },
+      undefined,
+      { shallow: true }
+    );
+  };
+};
+```
+
+**After** — one line, no boilerplate:
+
+```tsx
+import { useUrlParam } from 'next-url-state';
+
+const SearchPage = () => {
+  const [search, setSearch] = useUrlParam('q');
+};
+```
+
+Provider change in `_app.tsx`:
+
+```tsx
+// Before
+import { useRouter } from 'next/router'; // no provider needed, but lots of manual work
+
+// After
+import { UrlParamsProvider } from 'next-url-state';
+
+const MyApp = ({ Component, pageProps }) => (
+  <UrlParamsProvider>
+    <Component {...pageProps} />
+  </UrlParamsProvider>
+);
+```
+
+---
+
+### From Next.js App Router (the /app directory)
+
+**Before** — verbose URL construction on every update:
+
+```tsx
+'use client';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useCallback } from 'react';
+
+const SearchPage = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const search = searchParams.get('q');
+
+  const setSearch = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value) params.set('q', value);
+      else params.delete('q');
+      router.replace(`${pathname}?${params.toString()}`);
+    },
+    [searchParams, router, pathname]
+  );
+};
+```
+
+**After**:
+
+```tsx
+'use client';
+import { useUrlParam } from 'next-url-state';
+
+const SearchPage = () => {
+  const [search, setSearch] = useUrlParam('q');
+};
+```
+
+Provider change in `layout.tsx`:
+
+```tsx
+// Before — no provider, but each component wires up routing manually
+
+// After
+import { UrlParamsProvider } from 'next-url-state';
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <UrlParamsProvider>{children}</UrlParamsProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+---
+
+### From `use-query-params`
+
+**Provider** — simpler setup, no adapter required:
+
+```tsx
+// Before
+import { QueryParamProvider } from 'use-query-params';
+import { NextAdapter } from 'next-query-params';
+
+<QueryParamProvider adapter={NextAdapter}>
+  <Component {...pageProps} />
+</QueryParamProvider>
+
+// After
+import { UrlParamsProvider } from 'next-url-state';
+
+<UrlParamsProvider>
+  <Component {...pageProps} />
+</UrlParamsProvider>
+```
+
+**Hook equivalents:**
+
+| `use-query-params` | `next-url-state` |
+|---|---|
+| `useQueryParam('q', StringParam)` | `useUrlParam('q')` |
+| `useQueryParam('page', NumberParam)` | `useUrlParam<number>('page', { parse: (v) => parseInt(v ?? '1', 10), serialize: String })` |
+| `useQueryParam('flag', BooleanParam)` | `useUrlParam<boolean>('flag', { parse: (v) => v === 'true', serialize: (v) => v ? 'true' : undefined })` |
+| `useQueryParam('tags', ArrayParam)` | `useUrlParamArray('tags')` |
+| `useQueryParams({ q: StringParam, page: NumberParam })` | `useUrlParams(['q', 'page'])` |
+
+**Example side-by-side:**
+
+```tsx
+// Before
+import { useQueryParam, useQueryParams, StringParam, NumberParam, ArrayParam } from 'use-query-params';
+
+const [search, setSearch] = useQueryParam('q', StringParam);
+const [page, setPage] = useQueryParam('page', NumberParam);
+const [tags, setTags] = useQueryParam('tags', ArrayParam);
+const [{ q, page }, setQuery] = useQueryParams({ q: StringParam, page: NumberParam });
+
+// After
+import { useUrlParam, useUrlParamArray, useUrlParams } from 'next-url-state';
+
+const [search, setSearch] = useUrlParam('q');
+const [page, setPage] = useUrlParam<number>('page', { parse: (v) => parseInt(v ?? '1', 10), serialize: String });
+const [tags, setTags] = useUrlParamArray('tags');
+const [{ q, page }, setQuery] = useUrlParams(['q', 'page']);
+```
 
 ## API Reference
 
@@ -475,13 +714,65 @@ This library supports **both** Next.js routing systems:
 
 See the [examples](example/) folder for demos of all supported router types.
 
+## FAQ / Troubleshooting
+
+**Why not just use `useSearchParams()` directly?**
+
+`useSearchParams` (App Router) and `router.query` (Pages Router) require you to wire up reading, writing, and URL construction yourself every single time. For a single param that means three hooks, manual `URLSearchParams` construction, careful spreading to preserve other params, and no batching. `next-url-state` reduces all of that to one line that behaves like `useState`.
+
+---
+
+**Does this work with SSR / Server-Side Rendering?**
+
+Yes — in two ways:
+- **Client components** (`'use client'`) rendered on the server: the initial URL is read correctly during SSR and hydrated without a flicker on the client.
+- **React Server Components**: use `createRscAdapter` from `next-url-state/rsc` for read-only access. Setters are no-ops in RSC since URL updates require client-side JavaScript.
+
+---
+
+**How does batching work exactly?**
+
+Every setter call updates the UI **immediately** (optimistic update), but the actual URL write is debounced. All setter calls that happen within the `HISTORY_DEBOUNCE_MS` window (default 250 ms) are merged into a single `router.replace` / `router.push` call. This means typing into a search input doesn't flood the browser history with one entry per keystroke — only a single history entry is created once the user pauses. The debounce is [configurable](src/config.ts).
+
+---
+
+**Does batching work across multiple components?**
+
+Yes. All hooks share the same internal store via `UrlParamsProvider`. Updates from different components within the same debounce window are merged into one URL change.
+
+---
+
+**Why do I need `UrlParamsProvider`?**
+
+The provider creates the shared reactive store that all hooks read from and write to. Without it, hooks can't share state between components or batch their updates together. If you forget it, hooks will throw an error pointing you to add the provider.
+
+---
+
+**What happens when I set a value to `undefined`?**
+
+The parameter is removed from the URL entirely, keeping it clean. For example, `setSearch(undefined)` turns `?q=hello&page=2` into `?page=2`.
+
+---
+
+**Does this work with the browser's Back / Forward buttons?**
+
+Yes. When `historyEntry: true` is passed to a setter, a new browser history entry is created and the back button will undo that change. By default (`historyEntry: false`) the URL is replaced without adding a history entry, which is the right default for things like search inputs.
+
+---
+
+**Can I use this outside of Next.js?**
+
+No. The library depends on Next.js routing APIs (`next/router` for the Pages Router, `next/navigation` for the App Router) and is not designed for plain React or other frameworks.
+
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome!
+
+The [contributing guide](CONTRIBUTING.md) helps you get started with setting up the development environment and explains the development workflow.
 
 ## License
 
-MIT © Michael Holzner
+**next-url-state** is licensed under the [MIT License](https://github.com/DigitecGalaxus/next-url-state/blob/main/LICENSE).
 
 ## Acknowledgments
 

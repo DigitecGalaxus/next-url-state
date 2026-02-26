@@ -62,8 +62,7 @@ export const useUpdateSearchParams = () => {
         if (typeof window !== 'undefined') {
           const queryString = stringifyUrlParams(params);
           const urlQueryString = queryString ? `?${queryString}` : "";
-          const urlHash = hash ? `${hash}` : "";
-          const url = `${pathname}${urlQueryString}${urlHash}`;
+          const url = `${pathname}${urlQueryString}${hash}`;
 
           // Shallow routing uses replaceState, non-shallow uses pushState
           const historyMethod = isShallow ? 'replaceState' : 'pushState';
@@ -81,7 +80,7 @@ export const useUpdateSearchParams = () => {
         isShallow
       );
     },
-    [routerAdapterRef]
+    []
   );
 };
 

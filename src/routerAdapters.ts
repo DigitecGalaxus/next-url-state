@@ -69,10 +69,7 @@ function useAppRouterAdapterInternal(): RouterAdapter {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  if (typeof window === 'undefined') {
-    return createFallbackAdapter();
-  }
-
+  // App Router hooks work in both server and client contexts — no SSR guard needed
   return createAppRouterAdapter(pathname, searchParams, router);
 }
 
@@ -122,42 +119,6 @@ export const usePagesRouterAdapter = usePagesRouterAdapterInternal;
 export const useFallbackAdapter = useFallbackAdapterInternal;
 
 /**
- * Create an adapter for React Server Components.
- * Provides read-only access to URL params (setter is a no-op).
- *
- * @example
- * ```tsx
- * // In a Server Component (app/page.tsx)
- * export default function Page({ searchParams }: { searchParams: Record<string, string> }) {
- *   const adapter = createRscAdapter('/current-path', new URLSearchParams(searchParams));
- *   const path = adapter.getCurrentPath();
- * }
- * ```
- */
-export function createRscAdapter(
-  pathname: string,
-  searchParams: URLSearchParams
-): RouterAdapter {
-  return {
-    type: 'rsc',
-    isReady: true,
-
-    getCurrentPath(): string {
-      const search = searchParams.toString();
-      return `${pathname}${search ? `?${search}` : ''}`;
-    },
-
-    updateUrl(): Promise<boolean> {
-      // No-op: URL updates are not possible in Server Components
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[next-url-state] updateUrl is not available in Server Components');
-      }
-      return Promise.resolve(false);
-    },
-  };
-}
-
-/**
  * Creates a {@link RouterAdapter} for the Next.js App Router (`next/navigation`).
  *
  * Wraps the App Router's `push` and `replace` methods so they conform to
@@ -192,14 +153,14 @@ export function createAppRouterAdapter(
     ): Promise<boolean> {
       const queryString = stringifyUrlParams(params);
       const urlQueryString = queryString ? `?${queryString}` : '';
-      const urlHash = hash ? hash : '';
-      const url = `${pathname}${urlQueryString}${urlHash}`;
+      const url = `${pathname}${urlQueryString}${hash}`;
 
       // App Router uses different methods
+      // scroll: false prevents scrolling to top on every URL update
       if (method === 'push') {
-        router.push(url);
+        router.push(url, { scroll: false });
       } else {
-        router.replace(url);
+        router.replace(url, { scroll: false });
       }
 
       return Promise.resolve(true);
@@ -234,8 +195,7 @@ export function createPagesRouterAdapter(router: NextRouter): RouterAdapter {
     ): Promise<boolean> {
       const queryString = stringifyUrlParams(params);
       const urlQueryString = queryString ? `?${queryString}` : '';
-      const urlHash = hash ? hash : '';
-      const url = `${pathname}${urlQueryString}${urlHash}`;
+      const url = `${pathname}${urlQueryString}${hash}`;
 
       return router[method](url, undefined, { shallow });
     },
@@ -271,8 +231,7 @@ export function createFallbackAdapter(): RouterAdapter {
 
       const queryString = stringifyUrlParams(params);
       const urlQueryString = queryString ? `?${queryString}` : '';
-      const urlHash = hash ? hash : '';
-      const url = `${pathname}${urlQueryString}${urlHash}`;
+      const url = `${pathname}${urlQueryString}${hash}`;
 
       const historyMethod = method === 'push' ? 'pushState' : 'replaceState';
       window.history[historyMethod]({}, '', url);
