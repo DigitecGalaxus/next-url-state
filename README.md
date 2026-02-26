@@ -8,6 +8,8 @@
 [![Bundle size](https://img.shields.io/bundlephobia/minzip/next-url-state)](https://bundlephobia.com/package/next-url-state)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+<video src="https://github.com/user-attachments/assets/01f9b244-2258-4ad6-9af5-c79d3487bcff" autoplay loop muted playsinline width="100%"></video>
+
 **Used in production by:**
 
 [<img src="https://github.com/DigitecGalaxus.png" height="40" alt="Digitec Galaxus" />](https://www.galaxus.ch)
