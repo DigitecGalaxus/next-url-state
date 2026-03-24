@@ -1,15 +1,15 @@
 {
-  "name": "next-url-state-example-app",
+  "name": "next-url-state-example-pages",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3004",
+    "dev": "next dev -p 3005",
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
-    "next": "^16.1.6",
-    "next-url-state": "file:..",
+    "next": "^14.0.0",
+    "next-url-state": "file:../../next-url-state-local-v2.tgz",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -18,5 +18,8 @@
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
     "typescript": "^5.3.3"
+  },
+  "resolutions": {
+    "next": "^14.0.0"
   }
 }

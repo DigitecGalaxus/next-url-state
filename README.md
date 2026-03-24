@@ -669,6 +669,8 @@ Library defaults are defined in `src/config.ts` and can be adjusted to tune beha
 export const HISTORY_DEBOUNCE_MS = 250;
 ```
 
+> **Note for contributors**: This is a compile-time constant. To change the debounce for your own needs, clone the repo, edit `src/config.ts`, and build the package locally. End users of the published package cannot configure this at runtime — if you need runtime configurability, please open an issue.
+
 ## TypeScript Support
 
 Full TypeScript support with type inference:
@@ -712,7 +714,9 @@ This library supports **both** Next.js routing systems:
 - Use `createRscAdapter` for Server Components
 - Setter is a no-op (URL updates require client-side JavaScript)
 
-See the [examples](example/) folder for demos of all supported router types.
+See the [examples](examples/) folder for working demos of all supported router types:
+- [examples/next-app](examples/next-app/) — App Router example (port 3004)
+- [examples/pages-router](examples/pages-router/) — Pages Router example (port 3005)
 
 ## FAQ / Troubleshooting
 

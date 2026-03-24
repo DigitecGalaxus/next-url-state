@@ -22,7 +22,7 @@ Or manually:
 npm run build
 
 # 2. Install example dependencies
-cd example
+cd examples/next-app
 npm install
 
 # 3. Run the example
@@ -58,13 +58,15 @@ The example page demonstrates all features of `next-url-state`:
 ## File Structure
 
 ```
-example/
-├── pages/
-│   ├── _app.tsx       # UrlParamsProvider setup
-│   └── index.tsx      # Example page with all tests
-├── package.json       # Dependencies
-├── tsconfig.json      # TypeScript config
-└── next.config.js     # Next.js config
+next-app/
+├── app/
+│   ├── components/
+│   │   └── demoComponents.tsx  # Demo UI components
+│   ├── layout.tsx              # Root layout
+│   └── page.tsx                # Example page with all tests
+├── package.json                # Dependencies
+├── tsconfig.json               # TypeScript config
+└── next.config.js              # Next.js config
 ```
 
 ## Notes

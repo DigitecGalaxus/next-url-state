@@ -118,15 +118,6 @@ const UrlParamsProviderClient: React.FC<{ children: ReactNode }> = ({
   const updateSearchParams = useUpdateSearchParams();
   const currentRouterPathRef = useRef(routerPath);
 
-  // If router is not available, provide dummy context
-  if (!routerAdapter.isReady) {
-    return (
-      <UrlParamsContext.Provider value={DUMMY_CONTEXT}>
-        {children}
-      </UrlParamsContext.Provider>
-    );
-  }
-
   const contextValue = useLazyRef<UrlParamsContextValue>(() => {
     /** Internal state of last history entry */
     let lastHistoryEntry = 0;
@@ -305,6 +296,23 @@ const UrlParamsProviderClient: React.FC<{ children: ReactNode }> = ({
     return api;
   });
 
+  // Callbacks must not be fired during rendering but inside an effect
+  // this effect is triggered initially and on browser back/forward or link clicks
+  useEffect(() => {
+    if (routerAdapter.isReady) {
+      contextValue.updateHookStates();
+    }
+  }, [routerPath]);
+
+  // If router is not available, provide dummy context
+  if (!routerAdapter.isReady) {
+    return (
+      <UrlParamsContext.Provider value={DUMMY_CONTEXT}>
+        {children}
+      </UrlParamsContext.Provider>
+    );
+  }
+
   // Update the internal states before the context children render
   if (currentRouterPathRef.current !== routerPath) {
     currentRouterPathRef.current = routerPath;
@@ -313,12 +321,6 @@ const UrlParamsProviderClient: React.FC<{ children: ReactNode }> = ({
     contextValue.urlParams.sync = newUrlParams;
     contextValue.urlParams.async = newUrlParams;
   }
-
-  // Callbacks must not be fired during rendering but inside an effect
-  // this effect is triggered initialy and on browser back/forward or link clicks
-  useEffect(() => {
-    contextValue.updateHookStates();
-  }, [routerPath]);
 
   return (
     <UrlParamsContext.Provider value={contextValue}>
