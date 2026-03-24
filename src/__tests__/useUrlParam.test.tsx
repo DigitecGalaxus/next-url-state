@@ -15,9 +15,11 @@ jest.mock('next/router', () => ({
 }));
 
 // Mock next/navigation (should fail to load, triggering Pages Router)
-jest.mock('next/navigation', () => {
-  throw new Error('next/navigation not available');
-});
+jest.mock('next/navigation', () => ({
+  usePathname: jest.fn().mockReturnValue('/'),
+  useSearchParams: jest.fn().mockReturnValue(new URLSearchParams()),
+  useRouter: jest.fn().mockReturnValue({}),
+}));
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <UrlParamsProvider>{children}</UrlParamsProvider>
