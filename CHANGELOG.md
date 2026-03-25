@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0
+
+### Major Changes
+
+- b257db7: Initial public release — Next.js URL state management that gets out of your way.
+  Manage URL search parameters with hooks that work just like useState — no boilerplate, no race conditions, no manual URL construction. Supports both App Router and Pages Router with automatic detection, built-in batching and optimistic updates, and read-only access in React Server Components via next-url-state/rsc
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
@@ -10,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-10-14
 
 ### Added
+
 - Initial release of next-url-state
 - `useUrlParam` hook for managing single URL parameters
 - `useUrlParamArray` hook for managing array URL parameters
