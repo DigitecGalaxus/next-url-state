@@ -1,11 +1,19 @@
 import { defineConfig } from "tsup";
 
+const external = [
+  "react",
+  "react-dom",
+  "next",
+  "next/*",
+];
+
 const sharedConfig = {
   format: ["cjs", "esm"] as import("tsup").Format[],
   dts: true,
   splitting: false,
   sourcemap: true,
-  treeshake: false,
+  treeshake: true,
+  external
 };
 
 export default defineConfig([
@@ -15,7 +23,6 @@ export default defineConfig([
     ...sharedConfig,
     entry: ["src/index.ts"],
     clean: true,
-    external: ["react", "react-dom", "next", "next/router", "next/navigation"],
     esbuildOptions(options) {
       options.banner = {
         js: '"use client";',

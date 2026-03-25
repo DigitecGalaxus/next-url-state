@@ -1,6 +1,8 @@
 'use client';
 
 import type { NextRouter } from "next/router";
+import { useRouter as usePagesRouterHook } from "next/router";
+import { usePathname, useSearchParams, useRouter as useAppRouterHook } from "next/navigation";
 import type { NonNullableUrlParams } from "./utils/parseUrl";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { stringifyUrlParams } from "./utils/stringifyUrlParams";
@@ -34,49 +36,26 @@ function detectRouterType(): 'app' | 'pages' | 'fallback' {
   if (typeof window !== 'undefined' && (window as unknown as { __NEXT_DATA__?: unknown }).__NEXT_DATA__) {
     return 'pages';
   }
-
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const nav = require('next/navigation');
-    if (nav && typeof nav.usePathname === 'function') {
-      return 'app';
-    }
-  } catch {
-    // Expected in non-Next.js projects or Pages Router apps
+  if (typeof window === 'undefined') {
+    return 'fallback';
   }
-
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const router = require('next/router');
-    if (router && typeof router.useRouter === 'function') {
-      return 'pages';
-    }
-  } catch {
-    // Expected in non-Next.js projects or App Router apps
-  }
-
-  return 'fallback';
+  return 'app';
 }
 
 // Detect router type once at module load
 const DETECTED_ROUTER_TYPE = detectRouterType();
 
 function useAppRouterAdapterInternal(): RouterAdapter {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { usePathname, useSearchParams, useRouter } = require('next/navigation');
-
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const router = useAppRouterHook();
 
   // App Router hooks work in both server and client contexts — no SSR guard needed
   return createAppRouterAdapter(pathname, searchParams, router);
 }
 
 function usePagesRouterAdapterInternal(): RouterAdapter {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { useRouter } = require('next/router');
-  const router = useRouter();
+  const router = usePagesRouterHook();
 
   if (typeof window === 'undefined' || !router) {
     return createFallbackAdapter();

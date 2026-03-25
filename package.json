@@ -1,6 +1,7 @@
 {
   "name": "next-url-state",
-  "version": "0.1.0",
+  "version": "0.0.0",
+  "private": false,
   "description": "React hooks for managing state in URL search parameters with Next.js",
   "author": "Michael Holzner <michael.holzner@digitecgalaxus.ch>",
   "license": "MIT",
@@ -16,7 +17,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DigitecGalaxus/next-url-state"
+    "url": "git+https://github.com/DigitecGalaxus/next-url-state.git"
   },
   "bugs": {
     "url": "https://github.com/DigitecGalaxus/next-url-state/issues"
@@ -28,13 +29,22 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./rsc": {
       "types": "./dist/rsc.d.ts",
-      "import": "./dist/rsc.mjs",
-      "require": "./dist/rsc.js"
+      "import": "./dist/rsc.js",
+      "require": "./dist/rsc.js",
+      "default": "./dist/rsc.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "rsc": ["dist/rsc.d.ts"],
+      "*": ["dist/index.d.ts"]
     }
   },
   "files": [
@@ -50,19 +60,23 @@
     "typecheck": "tsc --noEmit",
     "test": "jest --watch",
     "test:ci": "jest --ci --coverage",
-    "prepublishOnly": "npm run build"
+    "release": "changeset publish"
   },
   "peerDependencies": {
-    "next": ">=12.0.0",
+    "next": ">=16.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.30.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.48",
+    "@testing-library/dom": "^10.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
     "esbuild": "^0.25.10",
@@ -75,7 +89,7 @@
     "typescript": "^5.3.3"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=20.9.0"
   },
   "publishConfig": {
     "access": "public"
