@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+- Broaden peer dependency ranges for wider compatibility: next lowered from >=16.0.0 to >=13.4.0 (minimum for App Router support), react/react-dom changed from ^18.0.0 to >=18.0.0 (adds React 19 support), and Node engine requirement relaxed from >=20.9.0 to >=18.
+
 ## 1.0.0
 
 ### Major Changes
