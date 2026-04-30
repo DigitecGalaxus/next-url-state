@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "next": "^15.5.15",
-    "next-url-state": "file:../../next-url-state-local-v2.tgz",
+    "next-url-state": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
