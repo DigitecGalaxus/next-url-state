@@ -1,6 +1,6 @@
 {
   "name": "next-url-state",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "description": "React hooks for managing state in URL search parameters with Next.js",
   "author": "Michael Holzner <michael.holzner@digitecgalaxus.ch>",
@@ -64,12 +64,13 @@
     "typecheck": "tsc --noEmit",
     "test": "jest --watch",
     "test:ci": "jest --ci --coverage",
+    "prepublishOnly": "npm run build",
     "release": "changeset publish"
   },
   "peerDependencies": {
-    "next": ">=16.0.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "next": ">=13.4.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
   },
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
@@ -93,7 +94,7 @@
     "typescript": "^5.3.3"
   },
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=18"
   },
   "publishConfig": {
     "access": "public"

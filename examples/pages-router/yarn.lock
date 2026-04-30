@@ -270,9 +270,10 @@ nanoid@^3.3.6:
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.11.tgz#4f4f112cefbe303202f2199838128936266d185b"
   integrity sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==
 
-"next-url-state@file:../../next-url-state-local-v2.tgz":
-  version "0.0.0"
-  resolved "file:../../next-url-state-local-v2.tgz#ce5f37437c9ab53ae5884765947496998072dc78"
+next-url-state@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/next-url-state/-/next-url-state-1.0.0.tgz#fdcb47d055048f4be58897e1e7297fa65dc5875a"
+  integrity sha512-VEtMvLvPnGOIBfcpb6z7v8fUbHltwTnRScgwU++RAfvO0twaD8Vho30eixc0HwgIkAxWRPxUn374CnChTmtdBQ==
 
 next@^15.5.15:
   version "15.5.15"
