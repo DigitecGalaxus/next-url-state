@@ -1,5 +1,6 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { render, screen, renderHook, act, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useUrlParam } from '../useUrlParam';
 import { UrlParamsProvider } from '../UrlParamsContext';
 import React from 'react';
@@ -115,6 +116,37 @@ describe('useUrlParam', () => {
   it('should return setter function', () => {
     const { result } = renderHook(() => useUrlParam('name'), { wrapper });
     expect(typeof result.current[1]).toBe('function');
+  });
+
+  it('should keep multiple components in sync', async () => {
+    const user = userEvent.setup();
+    const TestComponent = ({ id }: { id: string }) => {
+      const [value, setValue] = useUrlParam('syncParam');
+      return (
+        <div>
+          <p data-testid={`value-${id}`}>{value}</p>
+          <input
+            data-testid={`input-${id}`}
+            value={value || ''}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        </div>
+      );
+    };
+
+    render(
+      <UrlParamsProvider>
+        <TestComponent id="1" />
+        <TestComponent id="2" />
+      </UrlParamsProvider>,
+    );
+
+    await user.type(screen.getByTestId('input-1'), 'synced');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('value-1')).toHaveTextContent('synced');
+    });
+    expect(screen.getByTestId('value-2')).toHaveTextContent('synced');
   });
 
   it('should preserve other parameters when updating', async () => {
