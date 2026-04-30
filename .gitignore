@@ -39,3 +39,5 @@ Thumbs.db
 .claude/settings.local.json
 nul
 
+**/.next/*
+*.tgz
