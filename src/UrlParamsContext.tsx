@@ -343,12 +343,27 @@ const useLazyRef = <T,>(initializer: () => T): T => {
 
 /**
  * SSR-safe wrapper for UrlParamsProvider
- * Renders dummy context on server and during hydration, full context after mount
+ * Renders dummy context on server and during hydration, full context after mount.
+ *
+ * App Router: isReady is always true, so we need a mounted guard to prevent
+ * hydration mismatches — server uses fallback adapter (isReady=false), but the
+ * client App Router adapter is immediately ready.
+ *
+ * Pages Router / Fallback: router.isReady starts as false, so
+ * UrlParamsProviderClient already renders DUMMY_CONTEXT on first render.
+ * No mounted guard needed, which avoids an extra render cycle in tests.
  */
 export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [mounted, setMounted] = useState(false);
+  // App Router is detected when window exists but __NEXT_DATA__ is absent.
+  // SSR always returns false here (no window), so the mounted guard is skipped
+  // on the server in all cases — UrlParamsProviderClient handles isReady=false.
+  const isAppRouter =
+    typeof window !== "undefined" &&
+    !(window as Window & { __NEXT_DATA__?: unknown }).__NEXT_DATA__;
+
+  const [mounted, setMounted] = useState(!isAppRouter);
 
   useEffect(() => {
     setMounted(true);
