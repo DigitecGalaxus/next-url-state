@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3
+
+### Patch Changes
+
+- 43b193b: The mounted state guard in UrlParamsProvider was only needed for App Router to prevent SSR hydration mismatches. For Pages Router, the router adapter starts with isReady=false, so UrlParamsProviderClient already renders DUMMY_CONTEXT on first render — the mounted guard was redundant.
+
 ## 1.0.2
 
 ### Patch Changes
