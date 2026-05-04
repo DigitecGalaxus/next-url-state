@@ -42,8 +42,21 @@ function detectRouterType(): 'app' | 'pages' | 'fallback' {
   return 'app';
 }
 
-// Detect router type once at module load
-const DETECTED_ROUTER_TYPE = detectRouterType();
+// Lazily detected and cached on first useRouterAdapter() call.
+// Intentionally not detected at module load time — module load happens before
+// test setup (e.g. window.__NEXT_DATA__) has a chance to run.
+let cachedAdapterImpl: (() => RouterAdapter) | null = null;
+
+function getAdapterImpl(): () => RouterAdapter {
+  if (!cachedAdapterImpl) {
+    const type = detectRouterType();
+    cachedAdapterImpl =
+      type === 'app' ? useAppRouterAdapterInternal :
+      type === 'pages' ? usePagesRouterAdapterInternal :
+      useFallbackAdapterInternal;
+  }
+  return cachedAdapterImpl;
+}
 
 function useAppRouterAdapterInternal(): RouterAdapter {
   const pathname = usePathname();
@@ -69,28 +82,23 @@ function useFallbackAdapterInternal(): RouterAdapter {
   return createFallbackAdapter();
 }
 
-const useRouterAdapterImpl: () => RouterAdapter =
-  DETECTED_ROUTER_TYPE === 'app' ? useAppRouterAdapterInternal :
-  DETECTED_ROUTER_TYPE === 'pages' ? usePagesRouterAdapterInternal :
-  useFallbackAdapterInternal;
-
 /**
  * React hook that returns the correct {@link RouterAdapter} for the current
  * Next.js environment.
  *
- * Router detection runs once at module load time and is then cached, so
- * every call returns the same adapter type without re-detecting.
+ * Router type is detected once on first call and then cached, so every
+ * subsequent call returns the same adapter type without re-detecting.
  *
  * Resolution order:
  * 1. **Pages Router** — if `window.__NEXT_DATA__` exists
- * 2. **App Router** — if `next/navigation` can be resolved
+ * 2. **App Router** — if window exists but no `__NEXT_DATA__`
  * 3. **Fallback** — uses the History API directly (SSR, testing, non-Next.js)
  *
  * For explicit control, use {@link useAppRouterAdapter},
  * {@link usePagesRouterAdapter}, or {@link useFallbackAdapter} instead.
  */
 export function useRouterAdapter(): RouterAdapter {
-  return useRouterAdapterImpl();
+  return getAdapterImpl()();
 }
 
 export const useAppRouterAdapter = useAppRouterAdapterInternal;
