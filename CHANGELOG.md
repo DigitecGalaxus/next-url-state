@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2
+
+### Patch Changes
+
+- 0c94f86: Fix issue #34: Error: invariant expected app router to be mounted
+
 ## 1.0.1
 
 ### Patch Changes
