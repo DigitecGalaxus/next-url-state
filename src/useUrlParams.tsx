@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import type { NonNullableUrlParams, UrlParam } from "./utils/parseUrl";
 import {
   type UrlChangeOptions,
@@ -46,7 +46,15 @@ export const useUrlParams = <TKeys extends string>(
     Readonly<GenericUrlParamsString<TKeys>>
   >(() => filterByKeys(urlParams.sync, keys));
 
+  // Re-seed state when context identity changes (e.g. Pages Router switches
+  // from DUMMY_CONTEXT to real context after router.isReady becomes true).
+  const prevAddParamsCallbackRef = useRef(addParamsCallback);
+
   useEffect(() => {
+    if (prevAddParamsCallbackRef.current !== addParamsCallback) {
+      prevAddParamsCallbackRef.current = addParamsCallback;
+      setUrlParamsState(filterByKeys(urlParams.sync, keys));
+    }
     return addParamsCallback((newParams, changedKeys) => {
       // Subscribe to all params if no specific keys are provided
       // or to specific keys if they have changed
@@ -58,6 +66,7 @@ export const useUrlParams = <TKeys extends string>(
     // join keys re-subscribe only if the value of keys changes
     // use null value not allowed in urls to prevent conflicts with actual key separators
     keys.join("\0"),
+    addParamsCallback,
   ]);
   return [
     currentUrlParams,
@@ -110,7 +119,15 @@ export const useUrlParamsArray = <TKeys extends string>(
     Readonly<GenericUrlParamsArray<TKeys>>
   >(() => filterByKeysArray(urlParams.sync, keys));
 
+  // Re-seed state when context identity changes (e.g. Pages Router switches
+  // from DUMMY_CONTEXT to real context after router.isReady becomes true).
+  const prevAddParamsCallbackRef = useRef(addParamsCallback);
+
   useEffect(() => {
+    if (prevAddParamsCallbackRef.current !== addParamsCallback) {
+      prevAddParamsCallbackRef.current = addParamsCallback;
+      setUrlParamsState(filterByKeysArray(urlParams.sync, keys));
+    }
     return addParamsCallback((newParams, changedKeys) => {
       // Subscribe to all params if no specific keys are provided
       // or to specific keys if they have changed
@@ -122,6 +139,7 @@ export const useUrlParamsArray = <TKeys extends string>(
     // join keys re-subscribe only if the value of keys changes
     // use null value not allowed in urls to prevent conflicts with actual key separators
     keys.join("\0"),
+    addParamsCallback,
   ]);
   return [
     currentUrlParams,
