@@ -1,6 +1,6 @@
 {
   "name": "next-url-state",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": false,
   "description": "React hooks for managing state in URL search parameters with Next.js",
   "author": "Michael Holzner <michael.holzner@digitecgalaxus.ch>",
