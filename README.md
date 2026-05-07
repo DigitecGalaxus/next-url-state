@@ -768,6 +768,32 @@ Yes. When `historyEntry: true` is passed to a setter, a new browser history entr
 
 No. The library depends on Next.js routing APIs (`next/router` for the Pages Router, `next/navigation` for the App Router) and is not designed for plain React or other frameworks.
 
+---
+
+**How do I set up next-url-state in tests (Jest / Vitest) for a Pages Router project?**
+
+In a jsdom test environment, `window` exists but `window.__NEXT_DATA__` is not set. Without it, the library cannot detect that it is running inside a Pages Router app and falls back to the App Router adapter, which causes errors like:
+
+```
+Error: invariant expected app router to be mounted
+```
+
+Add the following to your test setup file (e.g. `vitest.setup.ts` or `jest.setup.ts`):
+
+```ts
+if (typeof window !== "undefined") {
+  // Signal Pages Router to next-url-state
+  window.__NEXT_DATA__ ??= {
+    props: {},
+    page: "/",
+    query: {},
+    buildId: "test",
+  };
+}
+```
+
+This mirrors what Next.js sets in production and lets the library pick the correct Pages Router adapter. No equivalent setup is needed for App Router projects.
+
 ## Contributing
 
 Contributions are welcome!
