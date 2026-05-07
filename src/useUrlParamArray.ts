@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useContext, useEffect, useRef } from "react";
 import { type NonNullableUrlParam, type UrlParam } from "./utils/parseUrl";
 import {
   type UrlChangeOptions,
@@ -93,15 +93,21 @@ export const useUrlParamArray = <TParam = string | string[]>(
     [paramName],
   );
 
+  // Use a ref so the callback stays stable even when options is an inline object
+  // that changes reference on every render (common when useUrlParam wraps useUrlParamArray).
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
   const updateValue = useCallback(
     async (newValue: TParam, urlChangeOptions?: UrlChangeOptions) => {
+      const currentOptions = optionsRef.current;
       let urlParamValue: string | string[];
-      if (options) {
-        if ("serialize" in options && options.serialize) {
-          urlParamValue = options.serialize(newValue);
+      if (currentOptions) {
+        if ("serialize" in currentOptions && currentOptions.serialize) {
+          urlParamValue = currentOptions.serialize(newValue);
         }
         // Remove the parameter if the value is undefined or the default value
-        else if (options.parse([]) === newValue || newValue === undefined) {
+        else if (currentOptions.parse([]) === newValue || newValue === undefined) {
           urlParamValue = [];
         } else {
           urlParamValue = newValue as string | string[];
@@ -111,7 +117,7 @@ export const useUrlParamArray = <TParam = string | string[]>(
       }
       return setUrlParam(paramName, urlParamValue, urlChangeOptions);
     },
-    [paramName, options, setUrlParam],
+    [paramName, setUrlParam],
   );
 
   return [value, updateValue] as const;
