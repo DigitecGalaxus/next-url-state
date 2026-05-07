@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.4
+
+### Patch Changes
+
+- 0279717: fix: stabilize setter returned from useUrlParam/useUrlParamArray\
+
 ## 1.0.3
 
 ### Patch Changes
