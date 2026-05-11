@@ -24,22 +24,10 @@ describe('createPagesRouterAdapter', () => {
   });
 
   describe('isReady', () => {
-    it('should be true when router.isReady is true', () => {
-      const mockRouter = createMockRouter({ isReady: true });
-      const adapter = createPagesRouterAdapter(mockRouter as NextRouter);
-      expect(adapter.isReady).toBe(true);
-    });
-
-    it('should be false when router.isReady is false', () => {
-      const mockRouter = createMockRouter({ isReady: false });
-      const adapter = createPagesRouterAdapter(mockRouter as NextRouter);
-      expect(adapter.isReady).toBe(false);
-    });
-
-    it('should be false when router.isReady is undefined', () => {
-      const mockRouter = createMockRouter({ isReady: undefined });
-      const adapter = createPagesRouterAdapter(mockRouter as NextRouter);
-      expect(adapter.isReady).toBe(false);
+    it('should always be true regardless of router.isReady', () => {
+      expect(createPagesRouterAdapter(createMockRouter({ isReady: true }) as NextRouter).isReady).toBe(true);
+      expect(createPagesRouterAdapter(createMockRouter({ isReady: false }) as NextRouter).isReady).toBe(true);
+      expect(createPagesRouterAdapter(createMockRouter({ isReady: undefined }) as NextRouter).isReady).toBe(true);
     });
   });
 

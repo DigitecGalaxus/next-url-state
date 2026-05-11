@@ -167,7 +167,9 @@ export function createAppRouterAdapter(
 export function createPagesRouterAdapter(router: NextRouter): RouterAdapter {
   return {
     type: 'pages',
-    isReady: router.isReady === true,
+    // router.asPath is always available on the client regardless of isReady.
+    // Server-side rendering uses createFallbackAdapter() instead (isReady=false there).
+    isReady: true,
 
     getCurrentPath(): string {
       return router.asPath || '/';
