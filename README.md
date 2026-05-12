@@ -52,7 +52,7 @@ Managing URL state in Next.js requires a lot of boilerplate and comes with sever
 - ✅ **Optimized performance** - Built-in batching ( default: 250ms, configurable ) and optimistic updates
 - ✅ **Type safety & Flexibility** - Support for basic and custom data types, including custom serialization
 - ✅ **Simple API** - Works just like `useState` but with URL persistence
-- ✅ **Router agnostic** - Works with both Pages Router and App Router automatically
+- ✅ **Router agnostic** - Works with both Pages Router and App Router — hooks have identical API regardless of router
 - ✅ **Zero Dependencies** - Lightweight with only peer dependencies on React and Next.js
 
 This library handles all the complexity of URL state management, letting you focus on building features instead of wrestling with router APIs.
@@ -92,20 +92,37 @@ pnpm add next-url-state
 
 ### 30-Second Start
 
-Two steps, works with both Pages Router and App Router:
+Two steps — pick the right provider for your router:
 
 ```tsx
 // Step 1 — wrap your app once
-// pages/_app.tsx  OR  app/layout.tsx
-import { UrlParamsProvider } from 'next-url-state';
+// pages/_app.tsx (Pages Router)
+import { UrlParamsPagesRouterProvider } from 'next-url-state';
 
-export default function App({ children }) {
-  return <UrlParamsProvider>{children}</UrlParamsProvider>;
+export default function App({ Component, pageProps }) {
+  return (
+    <UrlParamsPagesRouterProvider>
+      <Component {...pageProps} />
+    </UrlParamsPagesRouterProvider>
+  );
 }
 ```
 
 ```tsx
-// Step 2 — use it anywhere, just like useState
+// app/layout.tsx (App Router)
+import { UrlParamsProvider } from 'next-url-state';
+
+export default function RootLayout({ children }) {
+  return (
+    <html><body>
+      <UrlParamsProvider>{children}</UrlParamsProvider>
+    </body></html>
+  );
+}
+```
+
+```tsx
+// Step 2 — use it anywhere in both routers, just like useState
 'use client'; // only needed for App Router
 import { useUrlParam } from 'next-url-state';
 
@@ -121,22 +138,28 @@ That's it. The URL updates automatically. For router-specific setup details see 
 
 ### Pages Router Setup
 
-#### 1. Wrap your app with `UrlParamsProvider`
+#### 1. Wrap your app with `UrlParamsPagesRouterProvider`
 
 ```tsx
 // pages/_app.tsx
-import { UrlParamsProvider } from 'next-url-state';
+import { UrlParamsPagesRouterProvider } from 'next-url-state';
 
 const MyApp = ({ Component, pageProps }) => {
   return (
-    <UrlParamsProvider>
+    <UrlParamsPagesRouterProvider>
       <Component {...pageProps} />
-    </UrlParamsProvider>
+    </UrlParamsPagesRouterProvider>
   );
 }
 
 export default MyApp;
 ```
+
+> **Why `UrlParamsPagesRouterProvider` and not `UrlParamsProvider`?**
+>
+> `UrlParamsPagesRouterProvider` is a thin wrapper that reads `router.asPath` from `next/router` and passes it to the provider as the initial server-side path. This means URL parameters are available **during SSR**, so the server and client render identically — no hydration mismatch.
+>
+> `UrlParamsProvider` is intended for **App Router** apps — use it there, not in Pages Router. In a Pages Router app it starts with an empty param set on the server (no access to `next/router`), which causes hydration mismatches.
 
 #### 2. Use the hooks in your components
 
@@ -294,14 +317,16 @@ Provider change in `_app.tsx`:
 import { useRouter } from 'next/router'; // no provider needed, but lots of manual work
 
 // After
-import { UrlParamsProvider } from 'next-url-state';
+import { UrlParamsPagesRouterProvider } from 'next-url-state';
 
 const MyApp = ({ Component, pageProps }) => (
-  <UrlParamsProvider>
+  <UrlParamsPagesRouterProvider>
     <Component {...pageProps} />
-  </UrlParamsProvider>
+  </UrlParamsPagesRouterProvider>
 );
 ```
+
+> **Note**: Use `UrlParamsPagesRouterProvider` (not `UrlParamsProvider`) in Pages Router apps to avoid hydration mismatches. It reads `router.asPath` automatically so URL params are available during SSR.
 
 ---
 
@@ -378,12 +403,12 @@ import { NextAdapter } from 'next-query-params';
   <Component {...pageProps} />
 </QueryParamProvider>
 
-// After
-import { UrlParamsProvider } from 'next-url-state';
+// After (Pages Router)
+import { UrlParamsPagesRouterProvider } from 'next-url-state';
 
-<UrlParamsProvider>
+<UrlParamsPagesRouterProvider>
   <Component {...pageProps} />
-</UrlParamsProvider>
+</UrlParamsPagesRouterProvider>
 ```
 
 **Hook equivalents:**
@@ -702,17 +727,26 @@ This library supports **both** Next.js routing systems:
 #### ✅ Pages Router (`next/router`)
 - Fully supported with all features
 - Shallow routing enabled by default
-- Automatic detection when using Pages Router
+- Use **`UrlParamsPagesRouterProvider`** in `pages/_app.tsx` — it reads `router.asPath` from `next/router` and seeds the provider with the correct path during SSR. This mirrors exactly what Next.js itself does: `router.asPath` is serialized into `__NEXT_DATA__` and available on both server and client, so URL params are consistent across SSR and hydration with zero configuration.
+- `UrlParamsProvider` is intended for App Router — don't use it in Pages Router apps.
 
 #### ✅ App Router (`next/navigation`)
 - Fully supported with all features
-- Automatic detection when using App Router
+- Uses **`UrlParamsProvider`** in `app/layout.tsx` — internally wraps `useSearchParams()` from `next/navigation` and applies a mounted guard to prevent hydration mismatches. App Router client components are always ready on the client, so no `asPath` seed is needed.
 - Note: App Router doesn't support shallow routing (handled gracefully)
 
 #### ✅ React Server Components (RSC)
 - Read-only access to URL parameters
-- Use `createRscAdapter` for Server Components
+- Use `createRscAdapter` from `next-url-state/rsc` for Server Components
 - Setter is a no-op (URL updates require client-side JavaScript)
+
+#### Summary: which provider to use?
+
+| App type | Provider | Why |
+|---|---|---|
+| Pages Router (`/pages`) | `UrlParamsPagesRouterProvider` | Reads `router.asPath` on server — no hydration mismatch |
+| App Router (`/app`) | `UrlParamsProvider` | Wraps `useSearchParams()` with a mounted guard |
+| Both routers — hooks | `useUrlParam`, `useUrlParams`, … | Identical API regardless of router |
 
 See the [examples](examples/) folder for working demos of all supported router types:
 - [examples/next-app](examples/next-app/) — App Router example (port 3004)
@@ -729,8 +763,29 @@ See the [examples](examples/) folder for working demos of all supported router t
 **Does this work with SSR / Server-Side Rendering?**
 
 Yes — in two ways:
-- **Client components** (`'use client'`) rendered on the server: the initial URL is read correctly during SSR and hydrated without a flicker on the client.
+- **Pages Router**: use `UrlParamsPagesRouterProvider` in `pages/_app.tsx`. It reads `router.asPath` from `next/router` on the server, so URL params are seeded correctly during SSR. The server and client render identically — no hydration mismatch.
+- **App Router**: use `UrlParamsProvider` in `app/layout.tsx`. It wraps `useSearchParams()` with a mounted guard, which is the standard hydration-safe pattern for App Router client components.
 - **React Server Components**: use `createRscAdapter` from `next-url-state/rsc` for read-only access. Setters are no-ops in RSC since URL updates require client-side JavaScript.
+
+---
+
+**I'm getting a React hydration mismatch — server and client render differently for components that read URL params.**
+
+This happens in Pages Router apps when `UrlParamsProvider` is used instead of `UrlParamsPagesRouterProvider`. `UrlParamsProvider` cannot access `next/router` on the server, so it starts with empty URL params — meaning a component that opens an accordion when `?section=true` is present will render closed on the server but open on the client.
+
+Fix: replace `UrlParamsProvider` with `UrlParamsPagesRouterProvider` in `pages/_app.tsx`:
+
+```tsx
+// Before
+import { UrlParamsProvider } from 'next-url-state';
+// ...
+<UrlParamsProvider>{children}</UrlParamsProvider>
+
+// After
+import { UrlParamsPagesRouterProvider } from 'next-url-state';
+// ...
+<UrlParamsPagesRouterProvider>{children}</UrlParamsPagesRouterProvider>
+```
 
 ---
 
