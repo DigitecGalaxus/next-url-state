@@ -159,7 +159,7 @@ export default MyApp;
 >
 > `UrlParamsPagesRouterProvider` is a thin wrapper that reads `router.asPath` from `next/router` and passes it to the provider as the initial server-side path. This means URL parameters are available **during SSR**, so the server and client render identically — no hydration mismatch.
 >
-> `UrlParamsProvider` also works in Pages Router apps, but starts with an empty param set on the server because it cannot access the router path without `next/router`. Use it only if your app is fully client-side rendered and you don't need SSR param access.
+> `UrlParamsProvider` is intended for **App Router** apps — use it there, not in Pages Router. In a Pages Router app it starts with an empty param set on the server (no access to `next/router`), which causes hydration mismatches.
 
 #### 2. Use the hooks in your components
 
@@ -728,7 +728,7 @@ This library supports **both** Next.js routing systems:
 - Fully supported with all features
 - Shallow routing enabled by default
 - Use **`UrlParamsPagesRouterProvider`** in `pages/_app.tsx` — it reads `router.asPath` from `next/router` and seeds the provider with the correct path during SSR. This mirrors exactly what Next.js itself does: `router.asPath` is serialized into `__NEXT_DATA__` and available on both server and client, so URL params are consistent across SSR and hydration with zero configuration.
-- `UrlParamsProvider` also works but starts with empty params on the server — only use it in fully client-side-rendered apps where hydration mismatches are not a concern.
+- `UrlParamsProvider` is intended for App Router — don't use it in Pages Router apps.
 
 #### ✅ App Router (`next/navigation`)
 - Fully supported with all features
