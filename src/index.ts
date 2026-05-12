@@ -6,6 +6,7 @@ export type {
 } from "./utils/parseUrl";
 export {
   UrlParamsProvider,
+  UrlParamsPagesRouterProvider,
   type UrlParamsContextValue,
   type UrlChangeOptions,
 } from "./UrlParamsContext";

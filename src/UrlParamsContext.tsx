@@ -8,6 +8,7 @@ import React, {
   useState,
   useTransition,
 } from "react";
+import { useRouter as usePagesRouter } from "next/router";
 import { useRouterAdapter } from "./routerAdapters";
 import { useUpdateSearchParams } from "./useUpdateSearchParams";
 import {
@@ -107,13 +108,20 @@ export const UrlParamsContext = createContext<UrlParamsContextValue>(
 );
 UrlParamsContext.displayName = "UrlParamsContext";
 
-const UrlParamsProviderClient: React.FC<{ children: ReactNode }> = ({
+const UrlParamsProviderClient: React.FC<{ children: ReactNode; ssrPath?: string }> = ({
   children,
+  ssrPath,
 }) => {
   // Client-side only: safe to use hooks
   // Detect and use the appropriate router (Pages Router or App Router)
   const routerAdapter = useRouterAdapter();
-  const routerPath = routerAdapter.getCurrentPath();
+  // On Pages Router SSR, routerAdapter is 'fallback' with isReady=false because
+  // window is unavailable. Use ssrPath (from the Pages Router's router.asPath)
+  // to seed the initial URL params and avoid a hydration mismatch.
+  const ssrIsReady = typeof window === 'undefined' && ssrPath !== undefined;
+  const routerPath = routerAdapter.isReady
+    ? routerAdapter.getCurrentPath()
+    : (ssrPath ?? '/');
   const [, startTransition] = useTransition();
   const updateSearchParams = useUpdateSearchParams();
   const currentRouterPathRef = useRef(routerPath);
@@ -305,7 +313,7 @@ const UrlParamsProviderClient: React.FC<{ children: ReactNode }> = ({
   }, [routerPath]);
 
   // If router is not available, provide dummy context
-  if (!routerAdapter.isReady) {
+  if (!routerAdapter.isReady && !ssrIsReady) {
     return (
       <UrlParamsContext.Provider value={DUMMY_CONTEXT}>
         {children}
@@ -353,8 +361,9 @@ const useLazyRef = <T,>(initializer: () => T): T => {
  * UrlParamsProviderClient already renders DUMMY_CONTEXT on first render.
  * No mounted guard needed, which avoids an extra render cycle in tests.
  */
-export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
+export const UrlParamsProvider: React.FC<{ children: ReactNode; ssrPath?: string }> = ({
   children,
+  ssrPath,
 }) => {
   // App Router is detected when window exists but __NEXT_DATA__ is absent.
   // SSR always returns false here (no window), so the mounted guard is skipped
@@ -377,6 +386,33 @@ export const UrlParamsProvider: React.FC<{ children: ReactNode }> = ({
     );
   }
 
-  return <UrlParamsProviderClient>{children}</UrlParamsProviderClient>;
+  return <UrlParamsProviderClient ssrPath={ssrPath}>{children}</UrlParamsProviderClient>;
 };
 UrlParamsProvider.displayName = "UrlParamsProvider";
+
+/**
+ * Drop-in replacement for {@link UrlParamsProvider} in Next.js Pages Router apps.
+ *
+ * Automatically passes `router.asPath` as `ssrPath` so that URL params are
+ * available during server-side rendering. This prevents hydration mismatches
+ * for components that render differently based on URL params (e.g. an accordion
+ * that opens when `?section=true` is present).
+ *
+ * Use this in `pages/_app.tsx` instead of `UrlParamsProvider`:
+ * ```tsx
+ * export default function App({ Component, pageProps }: AppProps) {
+ *   return (
+ *     <UrlParamsPagesRouterProvider>
+ *       <Component {...pageProps} />
+ *     </UrlParamsPagesRouterProvider>
+ *   );
+ * }
+ * ```
+ */
+export const UrlParamsPagesRouterProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const router = usePagesRouter();
+  return <UrlParamsProvider ssrPath={router.asPath}>{children}</UrlParamsProvider>;
+};
+UrlParamsPagesRouterProvider.displayName = "UrlParamsPagesRouterProvider";
