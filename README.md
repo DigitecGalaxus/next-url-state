@@ -52,7 +52,7 @@ Managing URL state in Next.js requires a lot of boilerplate and comes with sever
 - ✅ **Optimized performance** - Built-in batching ( default: 250ms, configurable ) and optimistic updates
 - ✅ **Type safety & Flexibility** - Support for basic and custom data types, including custom serialization
 - ✅ **Simple API** - Works just like `useState` but with URL persistence
-- ✅ **Router agnostic** - Works with both Pages Router and App Router automatically
+- ✅ **Router agnostic** - Works with both Pages Router and App Router — hooks have identical API regardless of router
 - ✅ **Zero Dependencies** - Lightweight with only peer dependencies on React and Next.js
 
 This library handles all the complexity of URL state management, letting you focus on building features instead of wrestling with router APIs.
