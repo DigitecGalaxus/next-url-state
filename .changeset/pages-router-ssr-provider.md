@@ -1,5 +1,5 @@
 ---
-"next-url-state": minor
+"next-url-state": patch
 ---
 
 Add `UrlParamsPagesRouterProvider` for SSR-safe Pages Router setup
