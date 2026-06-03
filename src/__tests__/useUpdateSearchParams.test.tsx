@@ -119,7 +119,12 @@ describe('useUpdateSearchParams', () => {
     let replaceStateSpy: ReturnType<typeof jest.spyOn>;
     let pushStateSpy: ReturnType<typeof jest.spyOn>;
 
+    // Mimics the bookkeeping Next.js keeps on history.state. The fallback must
+    // preserve it instead of clobbering it with `{}`.
+    const nextLikeState = { __N: true, key: 'seed', idx: 1 };
+
     beforeEach(() => {
+      window.history.replaceState(nextLikeState, '', window.location.href);
       replaceStateSpy = jest.spyOn(window.history, 'replaceState').mockImplementation(() => {});
       pushStateSpy = jest.spyOn(window.history, 'pushState').mockImplementation(() => {});
     });
@@ -153,7 +158,7 @@ describe('useUpdateSearchParams', () => {
         await result.current('push', { q: 'hello' }, { current: '/search' });
       });
 
-      expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/search?q=hello');
+      expect(replaceStateSpy).toHaveBeenCalledWith(nextLikeState, '', '/search?q=hello');
       expect(pushStateSpy).not.toHaveBeenCalled();
     });
 
@@ -166,8 +171,24 @@ describe('useUpdateSearchParams', () => {
         await result.current('push', { q: 'hello' }, { current: '/search' }, { shallow: false });
       });
 
-      expect(pushStateSpy).toHaveBeenCalledWith({}, '', '/search?q=hello');
+      expect(pushStateSpy).toHaveBeenCalledWith(nextLikeState, '', '/search?q=hello');
       expect(replaceStateSpy).not.toHaveBeenCalled();
+    });
+
+    it('preserves the existing history.state instead of clobbering it', async () => {
+      // Regression: passing `{}` wiped Next.js bookkeeping (`__N`/`key`/`idx`),
+      // so `onPopState` ignored the entry and back navigation froze in app
+      // webviews that drive the native history stack.
+      mockUseRouterAdapter.mockReturnValue(createAdapter(false));
+
+      const { result } = renderHook(() => useUpdateSearchParams());
+
+      await act(async () => {
+        await result.current('replace', { q: 'kept' }, { current: '/search' });
+      });
+
+      const [passedState] = replaceStateSpy.mock.calls[0] as unknown[];
+      expect(passedState).toEqual(nextLikeState);
     });
 
     it('builds the correct URL with query string in fallback mode', async () => {

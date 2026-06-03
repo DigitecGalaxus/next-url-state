@@ -64,9 +64,16 @@ export const useUpdateSearchParams = () => {
           const urlQueryString = queryString ? `?${queryString}` : "";
           const url = `${pathname}${urlQueryString}${hash}`;
 
-          // Shallow routing uses replaceState, non-shallow uses pushState
+          // Shallow routing uses replaceState, non-shallow uses pushState.
+          // Preserve the current history state instead of clobbering it with
+          // `{}`: Next.js stores its own bookkeeping (`__N`, `key`, `idx`) on
+          // `history.state` and ignores popstate events on entries that lack it
+          // (`onPopState` early-returns when `state.__N` is missing). Wiping it
+          // desyncs the browser/webview history stack from the router, which
+          // freezes back navigation in hosts that drive the native history
+          // (e.g. app webviews calling `webView.goBack()`).
           const historyMethod = isShallow ? 'replaceState' : 'pushState';
-          window.history[historyMethod]({}, "", url);
+          window.history[historyMethod](window.history.state, "", url);
         }
         return Promise.resolve(true);
       }

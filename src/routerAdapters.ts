@@ -222,8 +222,13 @@ export function createFallbackAdapter(): RouterAdapter {
       const urlQueryString = queryString ? `?${queryString}` : '';
       const url = `${pathname}${urlQueryString}${hash}`;
 
+      // Preserve the current history state instead of clobbering it with `{}`.
+      // Next.js keeps its own bookkeeping (`__N`, `key`, `idx`) on
+      // `history.state` and ignores popstate events on entries missing it, so
+      // wiping it breaks back navigation when the host drives the native
+      // history stack (e.g. app webviews calling `webView.goBack()`).
       const historyMethod = method === 'push' ? 'pushState' : 'replaceState';
-      window.history[historyMethod]({}, '', url);
+      window.history[historyMethod](window.history.state, '', url);
 
       return Promise.resolve(true);
     },
