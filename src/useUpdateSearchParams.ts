@@ -62,7 +62,10 @@ export const useUpdateSearchParams = () => {
         if (typeof window !== 'undefined') {
           const queryString = stringifyUrlParams(params);
           const urlQueryString = queryString ? `?${queryString}` : "";
-          const url = `${pathname}${urlQueryString}${hash}`;
+          // window.location.pathname is used instead of the router-reported pathname
+          // because Next.js strips the basePath from usePathname()/router.asPath,
+          // while window.location.pathname always reflects what's in the address bar.
+          const url = `${window.location.pathname}${urlQueryString}${hash}`;
 
           // Shallow routing uses replaceState, non-shallow uses pushState
           const historyMethod = isShallow ? 'replaceState' : 'pushState';
