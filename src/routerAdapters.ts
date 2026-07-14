@@ -222,8 +222,13 @@ export function createFallbackAdapter(): RouterAdapter {
       const urlQueryString = queryString ? `?${queryString}` : '';
       const url = `${pathname}${urlQueryString}${hash}`;
 
+      // Pass through the existing state rather than `{}`: Next.js writes its own
+      // bookkeeping (__N, key, idx) to history.state and its onPopState handler
+      // silently early-returns on entries where __N is absent. Overwriting it
+      // would freeze back navigation in hosts that drive the native stack
+      // directly (e.g. iOS/Android webviews).
       const historyMethod = method === 'push' ? 'pushState' : 'replaceState';
-      window.history[historyMethod]({}, '', url);
+      window.history[historyMethod](window.history.state, '', url);
 
       return Promise.resolve(true);
     },

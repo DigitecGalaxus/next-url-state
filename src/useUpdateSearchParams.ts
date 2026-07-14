@@ -67,9 +67,11 @@ export const useUpdateSearchParams = () => {
           // while window.location.pathname always reflects what's in the address bar.
           const url = `${window.location.pathname}${urlQueryString}${hash}`;
 
-          // Shallow routing uses replaceState, non-shallow uses pushState
+          // Pass through the existing state rather than `{}` — same reason as
+          // createFallbackAdapter: Next.js writes __N/key/idx to history.state
+          // and onPopState silently ignores entries where __N is absent.
           const historyMethod = isShallow ? 'replaceState' : 'pushState';
-          window.history[historyMethod]({}, "", url);
+          window.history[historyMethod](window.history.state, "", url);
         }
         return Promise.resolve(true);
       }
