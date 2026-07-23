@@ -8,7 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "next": "^15.5.15",
+    "next": "^15.5.21",
     "next-url-state": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
@@ -20,6 +20,6 @@
     "typescript": "^5.3.3"
   },
   "resolutions": {
-    "next": "^15.5.15"
+    "next": "^15.5.21"
   }
 }
