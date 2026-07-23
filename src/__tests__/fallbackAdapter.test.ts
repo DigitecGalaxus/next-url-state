@@ -8,10 +8,18 @@ describe('createFallbackAdapter', () => {
   let mockPushState: jest.Mock;
   let mockReplaceState: jest.Mock;
 
+  // The fallback must preserve the current history.state (Next.js keeps its
+  // __N/key/idx bookkeeping there) rather than clobbering it with {}.
+  const historyState = { __N: true, key: 'seed', idx: 2 };
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockPushState = jest.fn();
     mockReplaceState = jest.fn();
+
+    // Seed history.state with the real API before mocking it, so the adapter
+    // reads back a non-trivial state to forward.
+    window.history.replaceState(historyState, '', window.location.href);
 
     // Mock history methods
     jest.spyOn(window.history, 'pushState').mockImplementation(mockPushState);
@@ -55,7 +63,7 @@ describe('createFallbackAdapter', () => {
       const adapter = createFallbackAdapter();
       const result = await adapter.updateUrl('push', { foo: 'bar' }, '/test', '', false);
 
-      expect(mockPushState).toHaveBeenCalledWith({}, '', '/test?foo=bar');
+      expect(mockPushState).toHaveBeenCalledWith(historyState, '', '/test?foo=bar');
       expect(mockReplaceState).not.toHaveBeenCalled();
       expect(result).toBe(true);
     });
@@ -64,7 +72,7 @@ describe('createFallbackAdapter', () => {
       const adapter = createFallbackAdapter();
       const result = await adapter.updateUrl('replace', { foo: 'bar' }, '/test', '', false);
 
-      expect(mockReplaceState).toHaveBeenCalledWith({}, '', '/test?foo=bar');
+      expect(mockReplaceState).toHaveBeenCalledWith(historyState, '', '/test?foo=bar');
       expect(mockPushState).not.toHaveBeenCalled();
       expect(result).toBe(true);
     });
@@ -73,54 +81,54 @@ describe('createFallbackAdapter', () => {
       const adapter = createFallbackAdapter();
       await adapter.updateUrl('push', { foo: 'bar' }, '/test', '#section', false);
 
-      expect(mockPushState).toHaveBeenCalledWith({}, '', '/test?foo=bar#section');
+      expect(mockPushState).toHaveBeenCalledWith(historyState, '', '/test?foo=bar#section');
     });
 
     it('should handle empty params', async () => {
       const adapter = createFallbackAdapter();
       await adapter.updateUrl('push', {}, '/page', '', false);
 
-      expect(mockPushState).toHaveBeenCalledWith({}, '', '/page');
+      expect(mockPushState).toHaveBeenCalledWith(historyState, '', '/page');
     });
 
     it('should handle multiple params', async () => {
       const adapter = createFallbackAdapter();
       await adapter.updateUrl('push', { a: '1', b: '2', c: '3' }, '/multi', '', false);
 
-      expect(mockPushState).toHaveBeenCalledWith({}, '', '/multi?a=1&b=2&c=3');
+      expect(mockPushState).toHaveBeenCalledWith(historyState, '', '/multi?a=1&b=2&c=3');
     });
 
     it('should handle array params', async () => {
       const adapter = createFallbackAdapter();
       await adapter.updateUrl('push', { tags: ['react', 'nextjs'] }, '/posts', '', false);
 
-      expect(mockPushState).toHaveBeenCalledWith({}, '', '/posts?tags=react&tags=nextjs');
+      expect(mockPushState).toHaveBeenCalledWith(historyState, '', '/posts?tags=react&tags=nextjs');
     });
 
     it('should ignore shallow parameter', async () => {
       const adapter = createFallbackAdapter();
 
       await adapter.updateUrl('push', { foo: 'bar' }, '/test', '', true);
-      expect(mockPushState).toHaveBeenCalledWith({}, '', '/test?foo=bar');
+      expect(mockPushState).toHaveBeenCalledWith(historyState, '', '/test?foo=bar');
 
       jest.clearAllMocks();
 
       await adapter.updateUrl('push', { foo: 'bar' }, '/test', '', false);
-      expect(mockPushState).toHaveBeenCalledWith({}, '', '/test?foo=bar');
+      expect(mockPushState).toHaveBeenCalledWith(historyState, '', '/test?foo=bar');
     });
 
     it('should handle hash only (no params)', async () => {
       const adapter = createFallbackAdapter();
       await adapter.updateUrl('push', {}, '/page', '#anchor', false);
 
-      expect(mockPushState).toHaveBeenCalledWith({}, '', '/page#anchor');
+      expect(mockPushState).toHaveBeenCalledWith(historyState, '', '/page#anchor');
     });
 
     it('should handle special characters in params', async () => {
       const adapter = createFallbackAdapter();
       await adapter.updateUrl('push', { q: 'hello world', tag: 'a&b' }, '/search', '', false);
 
-      expect(mockPushState).toHaveBeenCalledWith({}, '', '/search?q=hello+world&tag=a%26b');
+      expect(mockPushState).toHaveBeenCalledWith(historyState, '', '/search?q=hello+world&tag=a%26b');
     });
   });
 });

@@ -119,7 +119,15 @@ describe('useUpdateSearchParams', () => {
     let replaceStateSpy: ReturnType<typeof jest.spyOn>;
     let pushStateSpy: ReturnType<typeof jest.spyOn>;
 
+    // Mimics the bookkeeping Next.js keeps on history.state. The fallback must
+    // preserve it instead of clobbering it with `{}`.
+    const nextLikeState = { __N: true, key: 'seed', idx: 1 };
+
     beforeEach(() => {
+      // Seed history.state with the real API before mocking it, so the adapter
+      // reads back a non-trivial state to forward.
+      window.history.replaceState(nextLikeState, '', window.location.href);
+
       replaceStateSpy = jest.spyOn(window.history, 'replaceState').mockImplementation(() => {});
       pushStateSpy = jest.spyOn(window.history, 'pushState').mockImplementation(() => {});
     });
@@ -153,7 +161,8 @@ describe('useUpdateSearchParams', () => {
         await result.current('push', { q: 'hello' }, { current: '/search' });
       });
 
-      expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/search?q=hello');
+      // URL uses window.location.pathname to preserve basePath; state forwarded unchanged
+      expect(replaceStateSpy).toHaveBeenCalledWith(nextLikeState, '', expect.stringContaining('q=hello'));
       expect(pushStateSpy).not.toHaveBeenCalled();
     });
 
@@ -166,7 +175,7 @@ describe('useUpdateSearchParams', () => {
         await result.current('push', { q: 'hello' }, { current: '/search' }, { shallow: false });
       });
 
-      expect(pushStateSpy).toHaveBeenCalledWith({}, '', '/search?q=hello');
+      expect(pushStateSpy).toHaveBeenCalledWith(nextLikeState, '', expect.stringContaining('q=hello'));
       expect(replaceStateSpy).not.toHaveBeenCalled();
     });
 
@@ -179,10 +188,26 @@ describe('useUpdateSearchParams', () => {
         await result.current('replace', { page: '3', sort: 'asc' }, { current: '/items' });
       });
 
+      // URL uses window.location.pathname (not the path ref) to preserve basePath
       const calledUrl = (replaceStateSpy.mock.calls[0] as unknown[])[2] as string;
-      expect(calledUrl).toContain('/items');
       expect(calledUrl).toContain('page=3');
       expect(calledUrl).toContain('sort=asc');
+    });
+
+    it('preserves the existing history.state instead of clobbering it', async () => {
+      // Regression: passing `{}` wiped Next.js bookkeeping (`__N`/`key`/`idx`),
+      // so `onPopState` ignored the entry and back navigation froze in app
+      // webviews that drive the native history stack.
+      mockUseRouterAdapter.mockReturnValue(createAdapter(false));
+
+      const { result } = renderHook(() => useUpdateSearchParams());
+
+      await act(async () => {
+        await result.current('replace', { q: 'kept' }, { current: '/search' });
+      });
+
+      const [passedState] = replaceStateSpy.mock.calls[0] as unknown[];
+      expect(passedState).toEqual(nextLikeState);
     });
 
     it('returns true in fallback mode', async () => {
