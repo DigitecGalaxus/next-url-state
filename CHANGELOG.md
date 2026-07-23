@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.8
+
+### Patch Changes
+
+- Fix History API fallback: preserve basePath and Next.js history state
+
+  The History API fallback path (used when the router adapter isn't ready yet) had two bugs:
+
+  **BasePath stripped from URL** — `usePathname()` and `router.asPath` both return the path without the Next.js `basePath`. Using them directly with `window.history.replaceState` wrote the wrong URL to the address bar, breaking page reloads on apps with a `basePath` configured.
+
+  Fixed by using `window.location.pathname` instead, which always reflects the full address bar path including the `basePath`.
+
+  **`history.state` clobbered with `{}`** — Next.js stores its own bookkeeping (`__N`, `key`, `idx`) on `history.state`. Its `onPopState` handler silently early-returns on entries where `__N` is absent, desyncing the router from the native history stack. In hosts that drive navigation directly (e.g. iOS/Android webviews calling `goBack()`), this froze back navigation for the rest of the session.
+
+  Fixed by forwarding `window.history.state` instead of `{}`.
+
 ## 1.0.7
 
 ### Patch Changes
