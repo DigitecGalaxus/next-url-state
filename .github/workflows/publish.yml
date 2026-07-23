@@ -38,6 +38,9 @@ jobs:
       - name: Build
         run: yarn build
 
+      - name: Remove static npm auth (publishing uses OIDC via trusted publisher)
+        run: npm config delete //registry.npmjs.org/:_authToken
+
       - name: Create Release Pull Request or Publish
         uses: changesets/action@6a0a831ff30acef54f2c6aa1cbbc1096b066edaf # v1.7.0
         with:
