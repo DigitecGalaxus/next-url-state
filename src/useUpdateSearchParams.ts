@@ -1,10 +1,11 @@
 'use client';
 
-import { type MutableRefObject, useCallback, useEffect, useRef } from "react";
+import { type MutableRefObject, useCallback, useRef } from "react";
 import { useRouterAdapter, type RouterAdapter } from "./routerAdapters";
 import { parseUrlWithImplicitDomain } from "./utils/urlParsing";
 import { type NonNullableUrlParams } from "./utils/parseUrl";
 import { stringifyUrlParams } from "./utils/stringifyUrlParams";
+import { getHistoryStateToForward } from "./utils/historyState";
 
 export type UpdateRouterOptions = {
   /**
@@ -35,14 +36,14 @@ export const useUpdateSearchParams = () => {
   const routerAdapter = useRouterAdapter();
   const routerAdapterRef = useRef<RouterAdapter | null>(null);
 
-  // set the ref only when the router becomes ready (client)
-  useEffect(() => {
-    if (routerAdapter.isReady) {
-      routerAdapterRef.current = routerAdapter;
-    } else {
-      routerAdapterRef.current = null;
-    }
-  }, [routerAdapter.isReady]);
+  // Assigned during render instead of inside an effect. Effects run child-first,
+  // so a param update fired from a child's mount effect happens *before* the
+  // provider's own effects. With the ref still empty at that point, the very
+  // first update of a page load always took the History API fallback below even
+  // though a router was available — which left the Next.js router pointing at
+  // the old URL, so its next commit wrote that URL straight back to the address
+  // bar (the removed param reappeared).
+  routerAdapterRef.current = routerAdapter.isReady ? routerAdapter : null;
 
   return useCallback(
     (
@@ -67,11 +68,11 @@ export const useUpdateSearchParams = () => {
           // while window.location.pathname always reflects what's in the address bar.
           const url = `${window.location.pathname}${urlQueryString}${hash}`;
 
-          // Pass through the existing state rather than `{}` — same reason as
-          // createFallbackAdapter: Next.js writes __N/key/idx to history.state
-          // and onPopState silently ignores entries where __N is absent.
+          // See getHistoryStateToForward: the Pages Router needs its existing
+          // history.state forwarded, the App Router needs `null` so its
+          // pushState/replaceState patch keeps the router in sync.
           const historyMethod = isShallow ? 'replaceState' : 'pushState';
-          window.history[historyMethod](window.history.state, "", url);
+          window.history[historyMethod](getHistoryStateToForward(), "", url);
         }
         return Promise.resolve(true);
       }
