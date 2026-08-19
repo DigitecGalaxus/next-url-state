@@ -130,5 +130,19 @@ describe('createFallbackAdapter', () => {
 
       expect(mockPushState).toHaveBeenCalledWith(historyState, '', '/search?q=hello+world&tag=a%26b');
     });
+
+    it('should pass null instead of App Router history state', async () => {
+      // The App Router's pushState/replaceState patch skips its router sync when
+      // the passed state already carries __NA — forwarding it would change the
+      // address bar while leaving the router on the old URL.
+      jest.restoreAllMocks();
+      window.history.replaceState({ __NA: true }, '', window.location.href);
+      jest.spyOn(window.history, 'pushState').mockImplementation(mockPushState);
+
+      const adapter = createFallbackAdapter();
+      await adapter.updateUrl('push', { foo: 'bar' }, '/test', '', false);
+
+      expect(mockPushState).toHaveBeenCalledWith(null, '', '/test?foo=bar');
+    });
   });
 });

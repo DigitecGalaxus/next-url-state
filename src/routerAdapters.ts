@@ -6,6 +6,7 @@ import { usePathname, useSearchParams, useRouter as useAppRouterHook } from "nex
 import type { NonNullableUrlParams } from "./utils/parseUrl";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { stringifyUrlParams } from "./utils/stringifyUrlParams";
+import { getHistoryStateToForward } from "./utils/historyState";
 
 /**
  * Common router interface that abstracts both Pages Router and App Router
@@ -222,13 +223,11 @@ export function createFallbackAdapter(): RouterAdapter {
       const urlQueryString = queryString ? `?${queryString}` : '';
       const url = `${pathname}${urlQueryString}${hash}`;
 
-      // Pass through the existing state rather than `{}`: Next.js writes its own
-      // bookkeeping (__N, key, idx) to history.state and its onPopState handler
-      // silently early-returns on entries where __N is absent. Overwriting it
-      // would freeze back navigation in hosts that drive the native stack
-      // directly (e.g. iOS/Android webviews).
+      // See getHistoryStateToForward: the Pages Router needs its existing
+      // history.state forwarded, the App Router needs `null` so its
+      // pushState/replaceState patch keeps the router in sync.
       const historyMethod = method === 'push' ? 'pushState' : 'replaceState';
-      window.history[historyMethod](window.history.state, '', url);
+      window.history[historyMethod](getHistoryStateToForward(), '', url);
 
       return Promise.resolve(true);
     },

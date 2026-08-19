@@ -1,5 +1,6 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import { renderHook, act } from '@testing-library/react';
+import { render, renderHook, act } from '@testing-library/react';
+import React, { useEffect } from 'react';
 import { useUpdateSearchParams } from '../useUpdateSearchParams';
 import { useRouterAdapter } from '../routerAdapters';
 import type { RouterAdapter } from '../routerAdapters';
@@ -113,6 +114,39 @@ describe('useUpdateSearchParams', () => {
 
       expect(returnValue).toBe(true);
     });
+
+    it('uses the adapter for an update fired from a child mount effect', async () => {
+      // Regression: the adapter used to be stored in an effect. Effects run
+      // child-first, so a child clearing a param on mount ran before the
+      // provider's effect and silently took the History API fallback — leaving
+      // the Next.js router on the old URL, which it then wrote back.
+      const adapter = createAdapter(true);
+      mockUseRouterAdapter.mockReturnValue(adapter);
+
+      const replaceStateSpy = jest
+        .spyOn(window.history, 'replaceState')
+        .mockImplementation(() => {});
+
+      const Child: React.FC<{ update: ReturnType<typeof useUpdateSearchParams> }> = ({
+        update,
+      }) => {
+        useEffect(() => {
+          update('replace', {}, { current: '/p/22/de?ths=l' });
+        }, []);
+        return null;
+      };
+
+      const Parent: React.FC = () => <Child update={useUpdateSearchParams()} />;
+
+      await act(async () => {
+        render(<Parent />);
+      });
+
+      expect(adapter.updateUrl).toHaveBeenCalledWith('replace', {}, '/p/22/de', '', true);
+      expect(replaceStateSpy).not.toHaveBeenCalled();
+
+      replaceStateSpy.mockRestore();
+    });
   });
 
   describe('when router is not ready (History API fallback)', () => {
@@ -208,6 +242,33 @@ describe('useUpdateSearchParams', () => {
 
       const [passedState] = replaceStateSpy.mock.calls[0] as unknown[];
       expect(passedState).toEqual(nextLikeState);
+    });
+
+    it('passes null instead of the App Router history state', async () => {
+      // Regression: the App Router patches replaceState to keep usePathname()/
+      // useSearchParams() in sync, but bails out when the passed state already
+      // carries __NA. Forwarding it changed the address bar without telling the
+      // router, so its next commit restored the old URL with the removed param.
+      // Re-seed with the real API (beforeEach already replaced it with a no-op
+      // mock), then put the spy back in place.
+      replaceStateSpy.mockRestore();
+      window.history.replaceState(
+        { __NA: true, __PRIVATE_NEXTJS_INTERNALS_TREE: {} },
+        '',
+        window.location.href
+      );
+      replaceStateSpy = jest.spyOn(window.history, 'replaceState').mockImplementation(() => {});
+
+      mockUseRouterAdapter.mockReturnValue(createAdapter(false));
+
+      const { result } = renderHook(() => useUpdateSearchParams());
+
+      await act(async () => {
+        await result.current('replace', {}, { current: '/p/22/de?ths=l' });
+      });
+
+      const [passedState] = replaceStateSpy.mock.calls[0] as unknown[];
+      expect(passedState).toBeNull();
     });
 
     it('returns true in fallback mode', async () => {
